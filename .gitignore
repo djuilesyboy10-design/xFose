@@ -1,0 +1,41 @@
+# Build outputs
+bin/
+Debug/
+Release/
+x64/
+*.dll
+*.exe
+*.lib
+*.exp
+*.obj
+*.pch
+*.idb
+*.res
+*.log
+*.ilk
+*.meta
+*.suo
+*.user
+*.vcxproj
+*.vcxproj.filters
+*.sln.docstates
+
+# Visual Studio
+.vs/
+*.VC.opendb
+*.VC.db
+
+# IDE files
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
