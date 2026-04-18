@@ -1,49 +1,58 @@
 # xFOSE - Fallout 3 Script Extender
 
-xFOSE is a continuation of the Fallout 3 Script Extender (FOSE), restoring the broken Event Manager and enabling modders to respond to game events like hits, deaths, equips, and loads.
+xFOSE is an updated, modernized continuation of the Fallout 3 Script Extender (FOSE) — the first major update in 15 years. It restores the broken Event Manager, modernizes the codebase with C++14 features, and provides new tools for modders, all while maintaining 100% backward compatibility with existing FOSE plugins.
 
-## Features
+## What's New
 
-- **Restored Event Manager** - The Event Manager, broken in the original FOSE, now works correctly
-- **Event Handlers** - Plugins can register handlers for events: OnHit, OnDeath, OnLoad, OnEquip, OnActivate, and more
-- **100% Backward Compatible** - Existing FOSE plugins continue to work without modification
+- **Restored Event Manager** - The Event Manager was broken in the original FOSE and never worked. xFOSE fixes the initialization order bug and provides a fully working event system
+- **Event Handlers** - Plugins can register handlers for game events: OnHit, OnDeath, OnLoad, OnEquip, OnActivate, and more
+- **Codebase Modernization** - C++14 support, STL-style containers, modern string handling, RAII hook management, and plugin API helpers
+- **100% Backward Compatible** - Drop-in replacement for FOSE. All existing plugins and mods continue to work without modification
 - **Open Source** - Free to use, modify, and upgrade by anyone
 
-## Building
+## Documentation
+
+- **[MODERNIZATION.md](MODERNIZATION.md)** - Full modernization guide covering all C++14 upgrades, container improvements, and new helper APIs
+- **[DEVELOPER_README.md](DEVELOPER_README.md)** - Developer guide for using the Event Manager API in your plugins
+- **[EVENT_MANAGER_API.md](EVENT_MANAGER_API.md)** - Detailed Event Manager API reference
+
+## Installation (Users)
+
+1. Copy `fose_loader.exe` and `fose_1_7.dll` to your Fallout 3 directory
+2. Launch the game using `fose_loader.exe`
+3. All existing FOSE plugins will continue to work as before
+
+> **Note:** Windows Defender or Chrome may flag the download as a false positive. This is normal for script extenders that use DLL injection. Add the files to your antivirus exclusions to proceed.
+
+## Building (Developers)
 
 Requires Visual Studio and the Fallout 3 GOG or Steam version.
 
 1. Open `fose.sln` in Visual Studio
 2. Select Release|Win32 configuration
 3. Build the solution
-4. The output files will be in `bin\Release\`
+4. Output files will be in `bin\Release\`
 
-## Installation
-
-1. Copy `fose_loader.exe` and `fose_1_7.dll` to your Fallout 3 directory
-2. Launch the game using `fose_loader.exe`
-
-## Event Manager API
-
-Plugins can use the Event Manager interface to register event handlers:
+## Event Manager Quick Start
 
 ```cpp
 #include "fose/PluginAPI.h"
 
+void OnHitHandler(void* params, void* context) {
+    // Handle hit event
+}
+
 extern "C" __declspec(dllexport) bool FOSEPlugin_Load(const FOSEInterface* fose)
 {
-    g_fose = fose;
-    
     // Get Event Manager interface
-    g_eventManager = (FOSEEventManagerInterface*)fose->QueryInterface(kInterface_EventManager);
-    if (!g_eventManager)
-        return false;
+    auto eventMgr = (FOSEEventManagerInterface*)fose->QueryInterface(kInterface_EventManager);
+    if (!eventMgr) return false;
     
     // Register event handlers
-    g_eventManager->RegisterEventHandler("OnHit", OnHitHandler, nullptr, 0);
-    g_eventManager->RegisterEventHandler("OnDeath", OnDeathHandler, nullptr, 0);
-    g_eventManager->RegisterEventHandler("OnLoad", OnLoadHandler, nullptr, 0);
-    g_eventManager->RegisterEventHandler("OnEquip", OnEquipHandler, nullptr, 0);
+    eventMgr->RegisterEventHandler("OnHit", OnHitHandler, nullptr, 0);
+    eventMgr->RegisterEventHandler("OnDeath", OnDeathHandler, nullptr, 0);
+    eventMgr->RegisterEventHandler("OnLoad", OnLoadHandler, nullptr, 0);
+    eventMgr->RegisterEventHandler("OnEquip", OnEquipHandler, nullptr, 0);
     
     return true;
 }
@@ -51,22 +60,34 @@ extern "C" __declspec(dllexport) bool FOSEPlugin_Load(const FOSEInterface* fose)
 
 ## Available Events
 
-- `OnHit` - Fired when an actor is hit
-- `OnDeath` - Fired when an actor dies
-- `OnLoad` - Fired when a game loads
-- `OnEquip` - Fired when an item is equipped
-- `OnActivate` - Fired when an object is activated
+| Event | Description |
+|-------|-------------|
+| `OnHit` | Fired when an actor is hit |
+| `OnDeath` | Fired when an actor dies |
+| `OnLoad` | Fired when a game loads |
+| `OnEquip` | Fired when an item is equipped |
+| `OnActivate` | Fired when an object is activated |
+
+## Modernization Highlights
+
+- **String Class** - Modern constructors, std::string support, comparison operators
+- **Containers** - STL-style `size()`, `empty()`, `begin()`/`end()`, range-based for loops on tList, NiTArray, BSSimpleArray, NiTPointerMap
+- **Plugin API Helpers** - Type-safe interface queries, version checking, convenience wrappers
+- **Game Data Helpers** - Form type checking, safe casting, lookup functions
+- **Hook Helpers** - RAII-style hook management with automatic cleanup
+
+See [MODERNIZATION.md](MODERNIZATION.md) for full details and code examples.
 
 ## License
 
-This project is open source and free to use, modify, and distribute. See LICENSE file for details.
+This project is open source and free to use, modify, and distribute. See [LICENSE](LICENSE) for details.
 
 ## Credits
 
-- Original FOSE by the FOSE Team
-- xFOSE Event Manager restoration by djuilesyboy10
-- Based on xNVSE Event Manager implementation
+- **Original FOSE** by the FOSE Team
+- **xFOSE** - Event Manager restoration and modernization by djuilesyboy10
+- Inspired by xNVSE Event Manager implementation
 
 ## Support
 
-For modding questions and support, see the Nexus Mods page or GitHub Issues.
+For questions and support, see the [Nexus Mods page](https://www.nexusmods.com/fallout3) or open a GitHub Issue.
