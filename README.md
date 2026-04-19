@@ -7,6 +7,7 @@ xFOSE is an updated, modernized continuation of the Fallout 3 Script Extender (F
 - **Restored Event Manager** - The Event Manager was broken in the original FOSE and never worked. xFOSE fixes the initialization order bug and provides a fully working event system
 - **Event Handlers** - Plugins can register handlers for game events: OnHit, OnDeath, OnLoad, OnEquip, OnActivate, and more
 - **String Variables** - New script commands for string manipulation: create, set, get, concatenate, compare, and check validity with full save/load support
+- **Arrays** - New script commands for array operations: create, set, get, push, pop, remove, clear, and size with full save/load support
 - **Codebase Modernization** - C++14 support, STL-style containers, modern string handling, RAII hook management, and plugin API helpers
 - **100% Backward Compatible** - Drop-in replacement for FOSE. All existing plugins and mods continue to work without modification
 - **Open Source** - Free to use, modify, and upgrade by anyone
@@ -17,6 +18,7 @@ xFOSE is an updated, modernized continuation of the Fallout 3 Script Extender (F
 - **[DEVELOPER_README.md](DEVELOPER_README.md)** - Developer guide for using the Event Manager API in your plugins
 - **[EVENT_MANAGER_API.md](EVENT_MANAGER_API.md)** - Detailed Event Manager API reference
 - **[STRING_VARIABLES.md](STRING_VARIABLES.md)** - String variable commands and usage guide for modders
+- **[ARRAYS.md](ARRAYS.md)** - Array commands and usage guide for modders
 
 ## Installation (Users)
 

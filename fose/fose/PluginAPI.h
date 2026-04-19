@@ -41,6 +41,9 @@ enum
 	// Added for UI manipulation
 	kInterface_UI,
 
+	// Added for array variables
+	kInterface_ArrayVar,
+
 	kInterface_Max
 };
 
@@ -346,6 +349,51 @@ struct FOSEUIManagerInterface
 	// value: the new string value to set
 	// returns: true on success, false on failure
 	bool (* SetUIString)(const char* componentPath, const char* value);
+};
+
+/**** array variable API docs **************************************************
+*
+*	The array variable API allows plugins to create and manipulate arrays of data.
+*	Arrays support integer, float, and string elements.
+*
+************************************************************************************/
+
+struct FOSEArrayVarInterface
+{
+	enum {
+		kVersion = 1
+	};
+
+	UInt32	version;
+
+	// Create a new array
+	// owningScript: optional script that owns this array
+	// returns: the ID of the created array
+	UInt32 (* CreateArray)(void* owningScript);
+
+	// Get the size of an array
+	// arrayID: the ID of the array
+	// returns: the number of elements in the array, or 0 if invalid
+	UInt32 (* GetArraySize)(UInt32 arrayID);
+
+	// Set an element in an array (integer)
+	// arrayID: the ID of the array
+	// index: the index to set
+	// value: the integer value to set
+	// returns: true on success, false on failure
+	bool (* SetArrayElement)(UInt32 arrayID, UInt32 index, UInt32 value);
+
+	// Get an element from an array (integer)
+	// arrayID: the ID of the array
+	// index: the index to get
+	// outValue: pointer to receive the value
+	// returns: true on success, false on failure
+	bool (* GetArrayElement)(UInt32 arrayID, UInt32 index, UInt32* outValue);
+
+	// Check if an array ID is valid
+	// arrayID: the ID to check
+	// returns: true if valid, false if not
+	bool (* IsArrayValid)(UInt32 arrayID);
 };
 
 

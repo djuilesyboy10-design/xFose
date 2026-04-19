@@ -11,6 +11,7 @@ xFOSE is a drop-in replacement for the original FOSE 1.7. It maintains 100% back
 - **Full Backward Compatibility** — All existing FOSE plugins and mods work without modification
 - **Working Event Manager** — Script event handlers (OnHit, OnDeath, OnLoad, OnEquip, and more) now function correctly
 - **String Variables** — New script commands for string manipulation with full save/load support
+- **Arrays** — New script commands for array operations (create, set, get, push, pop, remove, clear, size) with full save/load support
 - **Modern Codebase** — Updated and maintained for stability and future expansion
 - **Open Source** — Free to use, modify, and improve by anyone
 

@@ -10,6 +10,7 @@
 #include "Commands_Quest.h"
 #include "Commands_Script.h"
 #include "Commands_String.h"
+#include "Commands_Array.h"
 #include "Commands_UI.h"
 #include "Commands_ModelIcon.h"
 #include "PluginManager.h"
@@ -1875,6 +1876,17 @@ void CommandTable::Init(void)
 	ADD_CMD(sv_concat);
 	ADD_CMD(sv_compare);
 	ADD_CMD(sv_is_valid);
+
+	// Array variable commands
+	ADD_CMD(ar_create);
+	ADD_CMD(ar_set);
+	ADD_CMD(ar_get);
+	ADD_CMD(ar_size);
+	ADD_CMD(ar_push);
+	ADD_CMD(ar_pop);
+	ADD_CMD(ar_remove);
+	ADD_CMD(ar_clear);
+	ADD_CMD(ar_is_valid);
 
 #ifdef _DEBUG
 //	ADD_CMD(CloneForm);

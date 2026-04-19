@@ -13,6 +13,7 @@ FOSEUIManagerInterface* GetUIInterface();
 #ifdef RUNTIME
 #include "Serialization.h"
 #include "StringVar.h"
+#include "ArrayVar.h"
 #include "Hooks_DirectInput8Create.h"
 #endif
 
@@ -31,6 +32,52 @@ static FOSEStringVarInterface g_FOSEStringVarInterface =
 	CreateString,
 	RegisterStringVarInterface,
 	AssignToStringVar
+};
+
+// Array interface functions (stubs for now - to be implemented later)
+static UInt32 CreateArray(void* owningScript)
+{
+	return ArrayVarManager::GetSingleton().CreateArray(owningScript);
+}
+
+static UInt32 GetArraySize(UInt32 arrayID)
+{
+	return ArrayVarManager::GetSingleton().GetSize(arrayID);
+}
+
+static bool SetArrayElement(UInt32 arrayID, UInt32 index, UInt32 value)
+{
+	ArrayVarManager::GetSingleton().SetElement(arrayID, index, ArrayElement(value));
+	return true;
+}
+
+static bool GetArrayElement(UInt32 arrayID, UInt32 index, UInt32* outValue)
+{
+	ArrayElement element;
+	if (ArrayVarManager::GetSingleton().GetElement(arrayID, index, element))
+	{
+		if (element.type == kArrayElement_Integer)
+		{
+			*outValue = element.intValue;
+			return true;
+		}
+	}
+	return false;
+}
+
+static bool IsArrayValid(UInt32 arrayID)
+{
+	return ArrayVarManager::GetSingleton().IsValid(arrayID);
+}
+
+static FOSEArrayVarInterface g_FOSEArrayVarInterface =
+{
+	FOSEArrayVarInterface::kVersion,
+	CreateArray,
+	GetArraySize,
+	SetArrayElement,
+	GetArrayElement,
+	IsArrayValid
 };
 
 #endif
@@ -339,6 +386,10 @@ void * PluginManager::QueryInterface(UInt32 id)
 
 		case kInterface_EventManager:
 			result = (void*)&g_FOSEEventManagerInterface;
+			break;
+
+		case kInterface_ArrayVar:
+			result = (void*)&g_FOSEArrayVarInterface;
 			break;
 
 		case kInterface_UI:

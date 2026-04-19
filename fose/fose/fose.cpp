@@ -8,6 +8,7 @@
 #include "Utilities.h"
 #include "EventManager.h"
 #include "StringVar.h"
+#include "ArrayVar.h"
 
 #ifdef NOGORE
 IDebugLog	gLog("fose_ng.log");
@@ -74,6 +75,9 @@ void FOSE_Initialize(void)
 
 		// Initialize string variable serialization
 		Init_StringVarSerialization();
+
+		// Initialize array variable serialization
+		Init_ArrayVarSerialization();
 
 		Hook_DirectInput8Create_Init();
 		Hook_Gameplay_Init();
