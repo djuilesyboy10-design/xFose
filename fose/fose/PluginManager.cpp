@@ -15,6 +15,8 @@ FOSEUIManagerInterface* GetUIInterface();
 #include "StringVar.h"
 #include "ArrayVar.h"
 #include "Hooks_DirectInput8Create.h"
+#include "ScriptInterface.h"
+#include "DataInterface.h"
 #endif
 
 PluginManager	g_pluginManager;
@@ -394,6 +396,14 @@ void * PluginManager::QueryInterface(UInt32 id)
 
 		case kInterface_UI:
 			result = (void*)GetUIInterface();
+			break;
+
+		case kInterface_Script:
+			result = (void*)&g_scriptInterface;
+			break;
+
+		case kInterface_Data:
+			result = (void*)&g_dataInterface;
 			break;
 
 		default:

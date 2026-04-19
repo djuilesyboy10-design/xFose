@@ -11,6 +11,9 @@ static UInt32 g_pluginVersion = 1;
 // Event Manager interface pointer
 static FOSEEventManagerInterface* g_eventManager = nullptr;
 
+// Data interface pointer
+static void* g_dataInterface = nullptr;
+
 // Log to own file in game working directory - no dependencies, no conflicts
 static void Log(const char* fmt, ...)
 {
@@ -68,6 +71,30 @@ extern "C" __declspec(dllexport) bool FOSEPlugin_Load(const FOSEInterface* fose)
         return false;
     }
     Log("EventManager interface obtained");
+
+    g_dataInterface = fose->QueryInterface(kInterface_Data);
+    if (!g_dataInterface)
+    {
+        Log("WARNING: QueryInterface for DataInterface returned NULL (may not be available)");
+    }
+    else
+    {
+        Log("DataInterface interface obtained");
+        // Cast to access version field (first field in struct)
+        UInt32 version = *((UInt32*)g_dataInterface);
+        Log("DataInterface version=%d", version);
+
+        // Get the function pointer for GetSingleton (second field in struct)
+        void* (*GetSingletonFunc)(UInt32) = *((void* (**)(UInt32))((char*)g_dataInterface + 4));
+
+        // Test GetSingleton with ArrayMap
+        void* arrayMap = GetSingletonFunc(1); // kFOSEData_ArrayMap = 1
+        Log("DataInterface GetSingleton(ArrayMap) returned: %08X", arrayMap);
+
+        // Test GetSingleton with StringMap
+        void* stringMap = GetSingletonFunc(2); // kFOSEData_StringMap = 2
+        Log("DataInterface GetSingleton(StringMap) returned: %08X", stringMap);
+    }
 
     bool r1 = g_eventManager->RegisterEventHandler("OnHit", OnHitHandler, nullptr, 0);
     bool r2 = g_eventManager->RegisterEventHandler("OnDeath", OnDeathHandler, nullptr, 0);

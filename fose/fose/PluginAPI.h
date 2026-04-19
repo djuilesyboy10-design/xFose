@@ -44,6 +44,12 @@ enum
 	// Added for array variables
 	kInterface_ArrayVar,
 
+	// Added for script compilation and function calling
+	kInterface_Script,
+
+	// Added for data access
+	kInterface_Data,
+
 	kInterface_Max
 };
 
@@ -395,6 +401,106 @@ struct FOSEArrayVarInterface
 	// returns: true if valid, false if not
 	bool (* IsArrayValid)(UInt32 arrayID);
 };
+
+/**** script API docs **********************************************************
+ *
+ *	Provides general functionality for interacting with scripts.
+ *
+ *	CallFunction() attempts to execute a script defined as a user-defined function.
+ *	A calling object and containing object can be specified, or passed as NULL.
+ *	If successful, it returns true, and the result is passed back from the script.
+ *
+ *	GetFunctionParams() returns the number of parameters expected by a function
+ *	script. Returns -1 if the script is not a valid function script.
+ *
+ ************************************************************************************/
+
+#if RUNTIME
+
+struct FOSEScriptInterface
+{
+	enum {
+		kVersion = 1
+	};
+
+	UInt32	version;
+
+	// Call a user-defined function script
+	// funcScript: the script to execute
+	// callingObj: the calling object (can be NULL)
+	// container: the containing object (can be NULL)
+	// result: pointer to receive the result
+	// numArgs: number of arguments
+	// ...: variable arguments (int, float, char*)
+	// returns: true on success, false on failure
+	bool (* CallFunction)(Script* funcScript, TESObjectREFR* callingObj, TESObjectREFR* container,
+		double* result, UInt8 numArgs, ...);
+
+	// Get the number of parameters expected by a function script
+	// funcScript: the script to check
+	// paramTypesOut: optional array to receive parameter types
+	// returns: number of parameters, or -1 if not a valid function script
+	UInt32 (* GetFunctionParams)(Script* funcScript, UInt8* paramTypesOut);
+
+	// Extract arguments with extended functionality
+	// Similar to game's ExtractArgs() but without type checking for TESForm parameters
+	bool (* ExtractArgsEx)(ParamInfo * paramInfo, void * scriptDataIn, UInt32 * scriptDataOffset, Script * scriptObj,
+		ScriptEventList * eventList, ...);
+
+	// Extract format string and arguments
+	bool (* ExtractFormatStringArgs)(UInt32 fmtStringPos, char* buffer, ParamInfo * paramInfo, void * scriptDataIn, 
+		UInt32 * scriptDataOffset, Script * scriptObj, ScriptEventList * eventList, UInt32 maxParams, ...);
+};
+
+#endif
+
+/**** data API docs **********************************************************
+ *
+ *	Provides access to internal data structures without reverse engineering.
+ *
+ *	GetSingleton() returns pointers to internal singleton objects.
+ *	GetFunc() returns pointers to internal utility functions.
+ *	GetData() returns pointers to internal data values.
+ *
+ ************************************************************************************/
+
+#if RUNTIME
+
+struct FOSEDataInterface
+{
+	enum {
+		kVersion = 1
+	};
+
+	UInt32	version;
+
+	// Singleton IDs for GetSingleton
+	enum {
+		kFOSEData_ArrayMap = 1,
+		kFOSEData_StringMap,
+		kFOSEData_SingletonMax,
+	};
+
+	// Data IDs for GetData
+	enum {
+		kFOSEData_NumPreloadMods = 1,
+		kFOSEData_DataMax,
+	};
+
+	// Get internal singleton objects
+	void * (* GetSingleton)(UInt32 singletonID);
+
+	// Get internal utility functions
+	void * (* GetFunc)(UInt32 funcID);
+
+	// Get internal data values
+	void * (* GetData)(UInt32 dataID);
+
+	// Clear script data cache (for performance)
+	void (* ClearScriptDataCache)();
+};
+
+#endif
 
 
 /**** serialization API docs ***************************************************
