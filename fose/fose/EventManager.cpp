@@ -159,6 +159,9 @@ namespace EventManager
 		s_lastOnHitWithWeapon = nullptr;
 		s_lastOnHitVictim = nullptr;
 		s_lastOnHitAttacker = nullptr;
+		
+		// Dispatch OnFrame event to all registered handlers
+		DispatchEventByID(kEventID_OnFrame, nullptr);
 	}
 	
 	void Initialize()
@@ -199,6 +202,7 @@ namespace EventManager
 		
 		// Special-cased game events
 		RegisterEvent("OnActivate", kEventID_OnActivate, kEventParams_OnActivate, 2);
+		RegisterEvent("OnFrame", kEventID_OnFrame, nullptr, 0);
 		
 	}
 	

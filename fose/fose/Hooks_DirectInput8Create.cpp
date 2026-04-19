@@ -2,6 +2,7 @@
 #include <dinput.h>
 #include "Hooks_DirectInput8Create.h"
 #include "fose_common/SafeWrite.h"
+#include "EventManager.h"
 #include <queue>
 
 static const GUID GUID_SysMouse    = { 0x6F1D2B60, 0xD5A0, 0x11CF, { 0xBF,0xC7,0x44,0x45,0x53,0x54,0x00,0x00} };
@@ -136,6 +137,9 @@ public:
 			DWORD time=GetTickCount();
 			fps_LastFrameLength=(float)(time-fps_LastTime)/1000.0f;
 			fps_LastTime=time;
+
+			// Dispatch OnFrame event every frame
+			EventManager::Tick();
 
 			fps_FrameTimeHistory[fps_FrameTimeHistoryIdx] = fps_LastFrameLength;
 			if(fps_FrameTimeHistoryIdx < kFrameTimeHistoryLength)

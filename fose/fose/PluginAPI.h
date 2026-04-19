@@ -38,6 +38,9 @@ enum
 	// Added for event manager
 	kInterface_EventManager,
 
+	// Added for UI manipulation
+	kInterface_UI,
+
 	kInterface_Max
 };
 
@@ -304,6 +307,45 @@ struct FOSEEventManagerInterface
 	// context: the context pointer used during registration
 	// returns: true on success, false on failure
 	bool (* RemoveEventHandler)(const char* eventName, EventHandlerCallback callback, void* context);
+};
+
+/**** UI manipulation API docs **************************************************
+*
+*	The UI manipulation API allows plugins to modify HUD and menu elements directly.
+*	This provides access to the same functionality as the SetUIFloat/SetUIString
+*	console commands, but callable from C++ code.
+*
+*	Component path format: "MenuType\\tile\\tile\\...\\traitName"
+*	Example: "HUDMainMenu\\xHM\\_xHMAlpha"
+*
+*	Returns error value (-999.0f) if the trait is not found.
+*
+************************************************************************************/
+
+struct FOSEUIManagerInterface
+{
+	enum {
+		kVersion = 1
+	};
+
+	UInt32	version;
+
+	// Get the value of a float UI trait
+	// componentPath: path to the UI trait (e.g., "HUDMainMenu\\xHM\\_xHMAlpha")
+	// returns: the float value, or -999.0f if trait not found
+	float (* GetUIFloat)(const char* componentPath);
+
+	// Set the value of a float UI trait
+	// componentPath: path to the UI trait (e.g., "HUDMainMenu\\xHM\\_xHMAlpha")
+	// value: the new float value to set
+	// returns: true on success, false on failure
+	bool (* SetUIFloat)(const char* componentPath, float value);
+
+	// Set the value of a string UI trait
+	// componentPath: path to the UI trait (e.g., "HUDMainMenu\\xHM\\filename")
+	// value: the new string value to set
+	// returns: true on success, false on failure
+	bool (* SetUIString)(const char* componentPath, const char* value);
 };
 
 

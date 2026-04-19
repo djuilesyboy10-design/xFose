@@ -39,6 +39,7 @@ These events use `kEventParams_GameEvent` (2 parameters: source, target):
 
 ### Special-Cased Events
 - `OnActivate` - Object activated (uses `kEventParams_OnActivate`)
+- `OnFrame` - Called every frame (no parameters)
 
 ## Getting the Interface
 

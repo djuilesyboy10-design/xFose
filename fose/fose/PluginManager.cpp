@@ -7,6 +7,9 @@
 #include "Utilities.h"
 #include "EventManager.h"
 
+// Forward declaration for UI interface
+FOSEUIManagerInterface* GetUIInterface();
+
 #ifdef RUNTIME
 #include "Serialization.h"
 //#include "StringVar.h"
@@ -357,6 +360,10 @@ void * PluginManager::QueryInterface(UInt32 id)
 
 		case kInterface_EventManager:
 			result = (void*)&g_FOSEEventManagerInterface;
+			break;
+
+		case kInterface_UI:
+			result = (void*)GetUIInterface();
 			break;
 
 		default:

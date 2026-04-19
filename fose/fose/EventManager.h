@@ -51,6 +51,7 @@ namespace EventManager
 		
 		// Special-cased game events (not in ScriptEventList)
 		kEventID_OnActivate = kEventID_ScriptEventListMAX,
+		kEventID_OnFrame,
 		
 		kEventID_GameEventMAX,
 		
