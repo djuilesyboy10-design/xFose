@@ -7,6 +7,7 @@
 #include "Core_Serialization.h"
 #include "Utilities.h"
 #include "EventManager.h"
+#include "StringVar.h"
 
 #ifdef NOGORE
 IDebugLog	gLog("fose_ng.log");
@@ -70,6 +71,9 @@ void FOSE_Initialize(void)
 		_MESSAGE("Event Manager initialized");
 
 		CommandTable::Init();
+
+		// Initialize string variable serialization
+		Init_StringVarSerialization();
 
 		Hook_DirectInput8Create_Init();
 		Hook_Gameplay_Init();

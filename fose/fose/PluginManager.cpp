@@ -12,7 +12,7 @@ FOSEUIManagerInterface* GetUIInterface();
 
 #ifdef RUNTIME
 #include "Serialization.h"
-//#include "StringVar.h"
+#include "StringVar.h"
 #include "Hooks_DirectInput8Create.h"
 #endif
 
@@ -23,13 +23,6 @@ PluginHandle					PluginManager::s_currentPluginHandle = 0;
 
 #ifdef RUNTIME
 
-#if 0		// not yet supported
-static FOSEConsoleInterface g_FOSEConsoleInterface =
-{
-	FOSEConsoleInterface::kVersion,
-	RunScriptLine
-};
-
 static FOSEStringVarInterface g_FOSEStringVarInterface =
 {
 	FOSEStringVarInterface::kVersion,
@@ -39,13 +32,6 @@ static FOSEStringVarInterface g_FOSEStringVarInterface =
 	RegisterStringVarInterface,
 	AssignToStringVar
 };
-
-static FOSEIOInterface g_FOSEIOInterface = 
-{
-	FOSEIOInterface::kVersion,
-	Plugin_IsKeyPressed
-};
-#endif
 
 #endif
 
@@ -338,17 +324,10 @@ void * PluginManager::QueryInterface(UInt32 id)
 		case kInterface_Serialization:
 			result = (void *)&g_FOSESerializationInterface;
 			break;
-#if 0		// not yet supported
-		case kInterface_Console:
-			result = (void *)&g_FOSEConsoleInterface;
-			break;
+
 		case kInterface_StringVar:
 			result = (void *)&g_FOSEStringVarInterface;
 			break;
-		case kInterface_IO:
-			result = (void *)&g_FOSEIOInterface;
-			break;
-#endif
 
 		case kInterface_Messaging:
 			result = (void *)&g_FOSEMessagingInterface;
