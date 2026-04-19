@@ -40,6 +40,46 @@ public:
 	// Clean up strings owned by a script
 	void	CleanupScriptStrings(void* script);
 
+	// Delete string by ID
+	void	Delete(UInt32 stringID);
+
+	// Static wrapper for Delete (for DataInterface)
+	static void DeleteBySelf(StringVarManager* self, UInt32 stringID);
+
+	// Get string length
+	UInt32	GetLength(UInt32 stringID);
+
+	// Compare two strings (returns 0 if equal, negative if first < second, positive if first > second)
+	SInt32	Compare(UInt32 stringID1, UInt32 stringID2);
+
+	// Concatenate two strings (creates a new string)
+	UInt32	Concatenate(UInt32 stringID1, UInt32 stringID2, void* owningScript);
+
+	// Extract substring (creates a new string)
+	UInt32	Substring(UInt32 stringID, UInt32 startIndex, UInt32 length, void* owningScript);
+
+	// Uppercase string (modifies in-place)
+	void	Uppercase(UInt32 stringID);
+
+	// Lowercase string (modifies in-place)
+	void	Lowercase(UInt32 stringID);
+
+	// Trim whitespace from string (modifies in-place)
+	void	Trim(UInt32 stringID);
+
+	// Replace occurrences of substring (modifies in-place, returns number of replacements)
+	UInt32	Replace(UInt32 stringID, const char* search, const char* replace);
+
+	// Static wrappers for DataInterface
+	static UInt32 GetLengthBySelf(StringVarManager* self, UInt32 stringID);
+	static SInt32 CompareBySelf(StringVarManager* self, UInt32 stringID1, UInt32 stringID2);
+	static UInt32 ConcatenateBySelf(StringVarManager* self, UInt32 stringID1, UInt32 stringID2, void* owningScript);
+	static UInt32 SubstringBySelf(StringVarManager* self, UInt32 stringID, UInt32 startIndex, UInt32 length, void* owningScript);
+	static void UppercaseBySelf(StringVarManager* self, UInt32 stringID);
+	static void LowercaseBySelf(StringVarManager* self, UInt32 stringID);
+	static void TrimBySelf(StringVarManager* self, UInt32 stringID);
+	static UInt32 ReplaceBySelf(StringVarManager* self, UInt32 stringID, const char* search, const char* replace);
+
 private:
 	StringVarManager();
 	~StringVarManager();

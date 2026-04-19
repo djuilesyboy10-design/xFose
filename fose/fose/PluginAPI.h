@@ -484,7 +484,38 @@ struct FOSEDataInterface
 	// Data IDs for GetData
 	enum {
 		kFOSEData_NumPreloadMods = 1,
+		kFOSEData_NumLoadedPlugins,
+		kFOSEData_FOSEVersion,
 		kFOSEData_DataMax,
+	};
+
+	// Function IDs for GetFunc
+	enum {
+		kFOSEData_FormExtraDataGet = 1,
+		kFOSEData_FormExtraDataGetAll,
+		kFOSEData_FormExtraDataAdd,
+		kFOSEData_FormExtraDataRemoveByName,
+		kFOSEData_FormExtraDataRemoveByPtr,
+		kFOSEData_FormExtraDataCount,
+		kFOSEData_FormExtraDataExists,
+		kFOSEData_FormExtraDataIterate,
+		kFOSEData_ArrayVarMapDeleteBySelf,
+		kFOSEData_StringVarMapDeleteBySelf,
+		kFOSEData_ArrayVarInsertAt,
+		kFOSEData_ArrayVarFindByValue,
+		kFOSEData_ArrayVarCountByType,
+		kFOSEData_StringVarGetLength,
+		kFOSEData_StringVarCompare,
+		kFOSEData_StringVarConcatenate,
+		kFOSEData_StringVarSubstring,
+		kFOSEData_ArrayVarSort,
+		kFOSEData_ArrayVarReverse,
+		kFOSEData_ArrayVarShuffle,
+		kFOSEData_StringVarUppercase,
+		kFOSEData_StringVarLowercase,
+		kFOSEData_StringVarTrim,
+		kFOSEData_StringVarReplace,
+		kFOSEData_FuncMax,
 	};
 
 	// Get internal singleton objects
@@ -499,6 +530,9 @@ struct FOSEDataInterface
 	// Clear script data cache (for performance)
 	void (* ClearScriptDataCache)();
 };
+
+// PluginFormExtraData class is defined in FormExtraData.h
+// Include FormExtraData.h to use PluginFormExtraData functionality
 
 #endif
 

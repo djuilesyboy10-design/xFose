@@ -83,6 +83,38 @@ public:
 	// Clean up arrays owned by a script
 	void	CleanupScriptArrays(void* script);
 
+	// Delete array by ID
+	void	Delete(UInt32 arrayID);
+
+	// Static wrapper for Delete (for DataInterface)
+	static void DeleteBySelf(ArrayVarManager* self, UInt32 arrayID);
+
+	// Insert element at specific index
+	bool	InsertAt(UInt32 arrayID, UInt32 index, const ArrayElement& element);
+
+	// Find element by value (returns index, or -1 if not found)
+	SInt32	FindByValue(UInt32 arrayID, const ArrayElement& element);
+
+	// Count elements by type
+	UInt32	CountByType(UInt32 arrayID, ArrayElementType type);
+
+	// Sort array elements (ascending order)
+	bool	Sort(UInt32 arrayID);
+
+	// Reverse array elements
+	bool	Reverse(UInt32 arrayID);
+
+	// Shuffle array elements randomly
+	bool	Shuffle(UInt32 arrayID);
+
+	// Static wrappers for DataInterface
+	static bool InsertAtBySelf(ArrayVarManager* self, UInt32 arrayID, UInt32 index, const ArrayElement& element);
+	static SInt32 FindByValueBySelf(ArrayVarManager* self, UInt32 arrayID, const ArrayElement& element);
+	static UInt32 CountByTypeBySelf(ArrayVarManager* self, UInt32 arrayID, ArrayElementType type);
+	static bool SortBySelf(ArrayVarManager* self, UInt32 arrayID);
+	static bool ReverseBySelf(ArrayVarManager* self, UInt32 arrayID);
+	static bool ShuffleBySelf(ArrayVarManager* self, UInt32 arrayID);
+
 private:
 	ArrayVarManager();
 	~ArrayVarManager();

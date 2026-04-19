@@ -3,6 +3,7 @@
 #include "GameAPI.h"
 #include "Serialization.h"
 #include "common/IDebugLog.h"
+#include <algorithm>
 
 static const UInt32 kArrayVarRecordType = 'ARRY';
 
@@ -192,6 +193,208 @@ void ArrayVarManager::CleanupScriptArrays(void* script)
 			++it;
 		}
 	}
+}
+
+void ArrayVarManager::Delete(UInt32 arrayID)
+{
+	auto it = m_arrayMap.find(arrayID);
+	if (it != m_arrayMap.end())
+	{
+		_MESSAGE("ArrayVar: Deleting array ID %d", arrayID);
+		delete it->second;
+		m_arrayMap.erase(it);
+	}
+	else
+	{
+		_MESSAGE("ArrayVar: Delete failed - ID %d not found", arrayID);
+	}
+}
+
+void ArrayVarManager::DeleteBySelf(ArrayVarManager* self, UInt32 arrayID)
+{
+	if (self)
+		self->Delete(arrayID);
+}
+
+bool ArrayVarManager::InsertAt(UInt32 arrayID, UInt32 index, const ArrayElement& element)
+{
+	auto it = m_arrayMap.find(arrayID);
+	if (it == m_arrayMap.end())
+	{
+		_MESSAGE("ArrayVar: InsertAt failed - ID %d not found", arrayID);
+		return false;
+	}
+
+	ArrayVarData* data = it->second;
+	UInt32 size = data->elements.size();
+
+	if (index > size)
+	{
+		_MESSAGE("ArrayVar: InsertAt failed - index %d out of bounds (size %d)", index, size);
+		return false;
+	}
+
+	data->elements.insert(data->elements.begin() + index, element);
+	return true;
+}
+
+SInt32 ArrayVarManager::FindByValue(UInt32 arrayID, const ArrayElement& element)
+{
+	auto it = m_arrayMap.find(arrayID);
+	if (it == m_arrayMap.end())
+	{
+		_MESSAGE("ArrayVar: FindByValue failed - ID %d not found", arrayID);
+		return -1;
+	}
+
+	ArrayVarData* data = it->second;
+	for (UInt32 i = 0; i < data->elements.size(); i++)
+	{
+		const ArrayElement& current = data->elements[i];
+		if (current.type != element.type)
+			continue;
+
+		bool match = false;
+		switch (element.type)
+		{
+		case kArrayElement_Integer:
+			match = (current.intValue == element.intValue);
+			break;
+		case kArrayElement_Float:
+			match = (current.floatValue == element.floatValue);
+			break;
+		case kArrayElement_String:
+			match = (current.stringID == element.stringID);
+			break;
+		default:
+			break;
+		}
+
+		if (match)
+			return (SInt32)i;
+	}
+
+	return -1;
+}
+
+UInt32 ArrayVarManager::CountByType(UInt32 arrayID, ArrayElementType type)
+{
+	auto it = m_arrayMap.find(arrayID);
+	if (it == m_arrayMap.end())
+	{
+		_MESSAGE("ArrayVar: CountByType failed - ID %d not found", arrayID);
+		return 0;
+	}
+
+	UInt32 count = 0;
+	ArrayVarData* data = it->second;
+	for (const auto& element : data->elements)
+	{
+		if (element.type == type)
+			count++;
+	}
+
+	return count;
+}
+
+bool ArrayVarManager::InsertAtBySelf(ArrayVarManager* self, UInt32 arrayID, UInt32 index, const ArrayElement& element)
+{
+	if (self)
+		return self->InsertAt(arrayID, index, element);
+	return false;
+}
+
+SInt32 ArrayVarManager::FindByValueBySelf(ArrayVarManager* self, UInt32 arrayID, const ArrayElement& element)
+{
+	if (self)
+		return self->FindByValue(arrayID, element);
+	return -1;
+}
+
+UInt32 ArrayVarManager::CountByTypeBySelf(ArrayVarManager* self, UInt32 arrayID, ArrayElementType type)
+{
+	if (self)
+		return self->CountByType(arrayID, type);
+	return 0;
+}
+
+bool ArrayVarManager::Sort(UInt32 arrayID)
+{
+	auto it = m_arrayMap.find(arrayID);
+	if (it == m_arrayMap.end())
+	{
+		_MESSAGE("ArrayVar: Sort failed - ID %d not found", arrayID);
+		return false;
+	}
+
+	ArrayVarData* data = it->second;
+	std::sort(data->elements.begin(), data->elements.end(),
+		[](const ArrayElement& a, const ArrayElement& b) {
+			if (a.type != b.type)
+				return a.type < b.type;
+			switch (a.type)
+			{
+			case kArrayElement_Integer:
+				return a.intValue < b.intValue;
+			case kArrayElement_Float:
+				return a.floatValue < b.floatValue;
+			case kArrayElement_String:
+				return a.stringID < b.stringID;
+			default:
+				return false;
+			}
+		});
+
+	return true;
+}
+
+bool ArrayVarManager::Reverse(UInt32 arrayID)
+{
+	auto it = m_arrayMap.find(arrayID);
+	if (it == m_arrayMap.end())
+	{
+		_MESSAGE("ArrayVar: Reverse failed - ID %d not found", arrayID);
+		return false;
+	}
+
+	ArrayVarData* data = it->second;
+	std::reverse(data->elements.begin(), data->elements.end());
+	return true;
+}
+
+bool ArrayVarManager::Shuffle(UInt32 arrayID)
+{
+	auto it = m_arrayMap.find(arrayID);
+	if (it == m_arrayMap.end())
+	{
+		_MESSAGE("ArrayVar: Shuffle failed - ID %d not found", arrayID);
+		return false;
+	}
+
+	ArrayVarData* data = it->second;
+	std::random_shuffle(data->elements.begin(), data->elements.end());
+	return true;
+}
+
+bool ArrayVarManager::SortBySelf(ArrayVarManager* self, UInt32 arrayID)
+{
+	if (self)
+		return self->Sort(arrayID);
+	return false;
+}
+
+bool ArrayVarManager::ReverseBySelf(ArrayVarManager* self, UInt32 arrayID)
+{
+	if (self)
+		return self->Reverse(arrayID);
+	return false;
+}
+
+bool ArrayVarManager::ShuffleBySelf(ArrayVarManager* self, UInt32 arrayID)
+{
+	if (self)
+		return self->Shuffle(arrayID);
+	return false;
 }
 
 // Serialization Callbacks

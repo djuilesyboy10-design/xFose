@@ -89,6 +89,234 @@ void StringVarManager::CleanupScriptStrings(void* script)
 	}
 }
 
+void StringVarManager::Delete(UInt32 stringID)
+{
+	auto it = m_stringMap.find(stringID);
+	if (it != m_stringMap.end())
+	{
+		_MESSAGE("StringVar: Deleting string ID %d", stringID);
+		delete it->second;
+		m_stringMap.erase(it);
+	}
+	else
+	{
+		_MESSAGE("StringVar: Delete failed - ID %d not found", stringID);
+	}
+}
+
+void StringVarManager::DeleteBySelf(StringVarManager* self, UInt32 stringID)
+{
+	if (self)
+		self->Delete(stringID);
+}
+
+UInt32 StringVarManager::GetLength(UInt32 stringID)
+{
+	auto it = m_stringMap.find(stringID);
+	if (it == m_stringMap.end())
+	{
+		_MESSAGE("StringVar: GetLength failed - ID %d not found", stringID);
+		return 0;
+	}
+
+	return (UInt32)it->second->data.length();
+}
+
+SInt32 StringVarManager::Compare(UInt32 stringID1, UInt32 stringID2)
+{
+	auto it1 = m_stringMap.find(stringID1);
+	auto it2 = m_stringMap.find(stringID2);
+
+	if (it1 == m_stringMap.end() || it2 == m_stringMap.end())
+	{
+		_MESSAGE("StringVar: Compare failed - one or both IDs not found (%d, %d)", stringID1, stringID2);
+		return -1;
+	}
+
+	return strcmp(it1->second->data.c_str(), it2->second->data.c_str());
+}
+
+UInt32 StringVarManager::Concatenate(UInt32 stringID1, UInt32 stringID2, void* owningScript)
+{
+	auto it1 = m_stringMap.find(stringID1);
+	auto it2 = m_stringMap.find(stringID2);
+
+	if (it1 == m_stringMap.end() || it2 == m_stringMap.end())
+	{
+		_MESSAGE("StringVar: Concatenate failed - one or both IDs not found (%d, %d)", stringID1, stringID2);
+		return 0;
+	}
+
+	std::string concatenated = it1->second->data + it2->second->data;
+	return CreateString(concatenated.c_str(), owningScript);
+}
+
+UInt32 StringVarManager::Substring(UInt32 stringID, UInt32 startIndex, UInt32 length, void* owningScript)
+{
+	auto it = m_stringMap.find(stringID);
+	if (it == m_stringMap.end())
+	{
+		_MESSAGE("StringVar: Substring failed - ID %d not found", stringID);
+		return 0;
+	}
+
+	const std::string& str = it->second->data;
+	UInt32 strLen = (UInt32)str.length();
+
+	if (startIndex >= strLen)
+	{
+		_MESSAGE("StringVar: Substring failed - startIndex %d out of bounds (length %d)", startIndex, strLen);
+		return 0;
+	}
+
+	// Adjust length if it exceeds string bounds
+	UInt32 actualLength = length;
+	if (startIndex + length > strLen)
+		actualLength = strLen - startIndex;
+
+	std::string substr = str.substr(startIndex, actualLength);
+	return CreateString(substr.c_str(), owningScript);
+}
+
+UInt32 StringVarManager::GetLengthBySelf(StringVarManager* self, UInt32 stringID)
+{
+	if (self)
+		return self->GetLength(stringID);
+	return 0;
+}
+
+SInt32 StringVarManager::CompareBySelf(StringVarManager* self, UInt32 stringID1, UInt32 stringID2)
+{
+	if (self)
+		return self->Compare(stringID1, stringID2);
+	return -1;
+}
+
+UInt32 StringVarManager::ConcatenateBySelf(StringVarManager* self, UInt32 stringID1, UInt32 stringID2, void* owningScript)
+{
+	if (self)
+		return self->Concatenate(stringID1, stringID2, owningScript);
+	return 0;
+}
+
+UInt32 StringVarManager::SubstringBySelf(StringVarManager* self, UInt32 stringID, UInt32 startIndex, UInt32 length, void* owningScript)
+{
+	if (self)
+		return self->Substring(stringID, startIndex, length, owningScript);
+	return 0;
+}
+
+void StringVarManager::Uppercase(UInt32 stringID)
+{
+	auto it = m_stringMap.find(stringID);
+	if (it == m_stringMap.end())
+	{
+		_MESSAGE("StringVar: Uppercase failed - ID %d not found", stringID);
+		return;
+	}
+
+	std::string& str = it->second->data;
+	for (char& c : str)
+	{
+		c = toupper(c);
+	}
+}
+
+void StringVarManager::Lowercase(UInt32 stringID)
+{
+	auto it = m_stringMap.find(stringID);
+	if (it == m_stringMap.end())
+	{
+		_MESSAGE("StringVar: Lowercase failed - ID %d not found", stringID);
+		return;
+	}
+
+	std::string& str = it->second->data;
+	for (char& c : str)
+	{
+		c = tolower(c);
+	}
+}
+
+void StringVarManager::Trim(UInt32 stringID)
+{
+	auto it = m_stringMap.find(stringID);
+	if (it == m_stringMap.end())
+	{
+		_MESSAGE("StringVar: Trim failed - ID %d not found", stringID);
+		return;
+	}
+
+	std::string& str = it->second->data;
+
+	// Trim leading whitespace
+	size_t start = str.find_first_not_of(" \t\n\r");
+	if (start != std::string::npos)
+	{
+		str = str.substr(start);
+	}
+
+	// Trim trailing whitespace
+	size_t end = str.find_last_not_of(" \t\n\r");
+	if (end != std::string::npos)
+	{
+		str = str.substr(0, end + 1);
+	}
+}
+
+UInt32 StringVarManager::Replace(UInt32 stringID, const char* search, const char* replace)
+{
+	auto it = m_stringMap.find(stringID);
+	if (it == m_stringMap.end())
+	{
+		_MESSAGE("StringVar: Replace failed - ID %d not found", stringID);
+		return 0;
+	}
+
+	if (!search || !replace)
+		return 0;
+
+	std::string& str = it->second->data;
+	std::string searchStr(search);
+	std::string replaceStr(replace);
+
+	UInt32 count = 0;
+	size_t pos = 0;
+	while ((pos = str.find(searchStr, pos)) != std::string::npos)
+	{
+		str.replace(pos, searchStr.length(), replaceStr);
+		pos += replaceStr.length();
+		count++;
+	}
+
+	return count;
+}
+
+void StringVarManager::UppercaseBySelf(StringVarManager* self, UInt32 stringID)
+{
+	if (self)
+		self->Uppercase(stringID);
+}
+
+void StringVarManager::LowercaseBySelf(StringVarManager* self, UInt32 stringID)
+{
+	if (self)
+		self->Lowercase(stringID);
+}
+
+void StringVarManager::TrimBySelf(StringVarManager* self, UInt32 stringID)
+{
+	if (self)
+		self->Trim(stringID);
+}
+
+UInt32 StringVarManager::ReplaceBySelf(StringVarManager* self, UInt32 stringID, const char* search, const char* replace)
+{
+	if (self)
+		return self->Replace(stringID, search, replace);
+	return 0;
+}
+
 // Interface Functions
 const char* GetString(UInt32 stringID)
 {
