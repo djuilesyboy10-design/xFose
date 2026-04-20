@@ -361,6 +361,10 @@ namespace EventManager
 		if (it == s_eventNameMap.end())
 			return false;
 		
+		// Get canonical event name (resolve aliases)
+		EventInfo* eventInfo = it->second;
+		const char* canonicalName = eventInfo->evName.c_str();
+		
 		// Create handler
 		NativeEventHandlerInfo handler(callback, context, priority);
 		if (pluginName)
@@ -369,8 +373,8 @@ namespace EventManager
 			handler.m_handlerName = handlerName;
 		EventCallback eventCallback(handler, priority);
 		
-		// Add to handler list
-		auto& handlerList = s_eventHandlers[eventName];
+		// Add to handler list using canonical name
+		auto& handlerList = s_eventHandlers[canonicalName];
 		
 		// Check if handler already exists
 		for (const auto& existing : handlerList)
@@ -386,7 +390,6 @@ namespace EventManager
 		});
 		
 		// Update s_eventsInUse bitmask for ScriptEventList events
-		EventInfo* eventInfo = it->second;
 		if (eventInfo->evID < kEventID_ScriptEventListMAX) {
 			s_eventsInUse |= MaskForEventID(eventInfo->evID);
 			_MESSAGE("RegisterEventHandler: '%s' -> s_eventsInUse = 0x%08X", eventName, s_eventsInUse);

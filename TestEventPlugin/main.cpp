@@ -117,6 +117,17 @@ void OnHitLowPriorityHandler(void** params, void* context)
     Log("OnHitLowPriorityHandler fired!");
 }
 
+// Phase 1.1 test handlers - Event Aliases
+void OnDeathAliasHandler(void** params, void* context)
+{
+    Log("OnDeathAliasHandler (using alias OnActorDeath) fired! source=%08X target=%08X", params ? params[0] : 0, params ? params[1] : 0);
+}
+
+void OnEquipAliasHandler(void** params, void* context)
+{
+    Log("OnEquipAliasHandler (using alias OnEquipped) fired! source=%08X target=%08X", params ? params[0] : 0, params ? params[1] : 0);
+}
+
 extern "C" __declspec(dllexport) bool FOSEPlugin_Query(const FOSEInterface* fose, PluginInfo* info)
 {
     info->infoVersion = PluginInfo::kInfoVersion;
@@ -365,6 +376,15 @@ extern "C" __declspec(dllexport) bool FOSEPlugin_Load(const FOSEInterface* fose)
 
     // Faction commands test: Log availability
     Log("Faction commands available: GetFactionRank, SetFactionRank, GetFactionReaction, SetFactionReaction, AddFaction, RemoveFaction");
+
+    // Phase 1.1 test: Event Aliases
+    // Register handler using alias "OnActorDeath" (alias for "OnDeath")
+    bool r17 = g_eventManager->RegisterEventHandler("OnActorDeath", OnDeathAliasHandler, nullptr, 0, "TestEventPlugin", "OnDeathAliasHandler");
+    Log("Phase 1.1 Event Alias test: RegisterEventHandler(OnActorDeath)=%d", r17);
+
+    // Register handler using alias "OnEquipped" (alias for "OnEquip")
+    bool r18 = g_eventManager->RegisterEventHandler("OnEquipped", OnEquipAliasHandler, nullptr, 0, "TestEventPlugin", "OnEquipAliasHandler");
+    Log("Phase 1.1 Event Alias test: RegisterEventHandler(OnEquipped)=%d", r18);
 
     return true;
 }
