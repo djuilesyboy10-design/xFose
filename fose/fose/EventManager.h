@@ -219,6 +219,9 @@ namespace EventManager
 	// Check if a filter matches the given parameters
 	bool FilterMatches(const EventFilter* filter, void** params);
 	
+	// Validate a filter structure
+	bool ValidateFilter(const EventFilter* filter);
+	
 	// Check if a handler is the first/last in the handler list for an event
 	bool IsEventHandlerFirst(const char* eventName, EventHandlerCallback callback, void* context = nullptr);
 	bool IsEventHandlerLast(const char* eventName, EventHandlerCallback callback, void* context = nullptr);

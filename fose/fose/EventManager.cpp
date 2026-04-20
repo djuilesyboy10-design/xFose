@@ -224,22 +224,22 @@ namespace EventManager
 		s_initialized = true;
 		
 		// Register ScriptEventList events
-		RegisterEvent("OnAdd", kEventID_OnAdd, kEventParams_GameEvent, 2);
-		RegisterEvent("OnEquip", kEventID_OnEquip, kEventParams_GameEvent, 2);
-		RegisterEvent("OnDrop", kEventID_OnDrop, kEventParams_GameEvent, 2);
-		RegisterEvent("OnUnequip", kEventID_OnUnequip, kEventParams_GameEvent, 2);
-		RegisterEvent("OnDeath", kEventID_OnDeath, kEventParams_GameEvent, 2);
+		RegisterEvent("OnAdd", kEventID_OnAdd, kEventParams_GameEvent, 2, "OnItemAdded");
+		RegisterEvent("OnEquip", kEventID_OnEquip, kEventParams_GameEvent, 2, "OnEquipped");
+		RegisterEvent("OnDrop", kEventID_OnDrop, kEventParams_GameEvent, 2, "OnItemDropped");
+		RegisterEvent("OnUnequip", kEventID_OnUnequip, kEventParams_GameEvent, 2, "OnUnequipped");
+		RegisterEvent("OnDeath", kEventID_OnDeath, kEventParams_GameEvent, 2, "OnActorDeath");
 		RegisterEvent("OnMurder", kEventID_OnMurder, kEventParams_GameEvent, 2);
-		RegisterEvent("OnCombatEnd", kEventID_OnCombatEnd, kEventParams_GameEvent, 2);
+		RegisterEvent("OnCombatEnd", kEventID_OnCombatEnd, kEventParams_GameEvent, 2, "OnCombatEnded");
 		RegisterEvent("OnHit", kEventID_OnHit, kEventParams_GameEvent, 2);
 		RegisterEvent("OnHitWith", kEventID_OnHitWith, kEventParams_GameEvent, 2);
 		RegisterEvent("OnPackageStart", kEventID_OnPackageStart, kEventParams_GameEvent, 2);
-		RegisterEvent("OnPackageDone", kEventID_OnPackageDone, kEventParams_GameEvent, 2);
+		RegisterEvent("OnPackageDone", kEventID_OnPackageDone, kEventParams_GameEvent, 2, "OnPackageEnd");
 		RegisterEvent("OnPackageChange", kEventID_OnPackageChange, kEventParams_GameEvent, 2);
-		RegisterEvent("OnLoad", kEventID_OnLoad, kEventParams_GameEvent, 2);
+		RegisterEvent("OnLoad", kEventID_OnLoad, kEventParams_GameEvent, 2, "OnCellLoad");
 		RegisterEvent("OnMagicEffectHit", kEventID_OnMagicEffectHit, kEventParams_GameEvent, 2);
 		RegisterEvent("OnSell", kEventID_OnSell, kEventParams_GameEvent, 2);
-		RegisterEvent("OnStartCombat", kEventID_OnStartCombat, kEventParams_GameEvent, 2);
+		RegisterEvent("OnStartCombat", kEventID_OnStartCombat, kEventParams_GameEvent, 2, "OnCombatStart");
 		RegisterEvent("OnOpen", kEventID_OnOpen, kEventParams_GameEvent, 2);
 		RegisterEvent("OnClose", kEventID_OnClose, kEventParams_GameEvent, 2);
 		RegisterEvent("SayToDone", kEventID_SayToDone, kEventParams_GameEvent, 2);
@@ -639,8 +639,20 @@ namespace EventManager
 			void** array = (void**)filter->filterValue;
 			for (UInt32 i = 0; i < filter->arraySize; i++)
 			{
-				if (array[i] == params[paramIndex])
-					return true; // Match found
+				// Support nested filters (arrays of arrays)
+				EventFilter* nestedFilter = (EventFilter*)array[i];
+				if (nestedFilter)
+				{
+					// Nested filter: recursively check if it matches
+					if (FilterMatches(nestedFilter, params))
+						return true;
+				}
+				else
+				{
+					// Simple value: direct comparison
+					if (array[i] == params[paramIndex])
+						return true;
+				}
 			}
 			return false; // No match in array
 		}
@@ -649,6 +661,37 @@ namespace EventManager
 			// Single value filter: direct comparison
 			return filter->filterValue == params[paramIndex];
 		}
+	}
+
+	bool ValidateFilter(const EventFilter* filter)
+	{
+		if (!filter)
+			return true; // Null filter is valid (no filtering)
+		
+		// Validate parameter index
+		if (filter->paramIndex >= 10) // Reasonable max parameter count
+			return false;
+		
+		// Validate array size
+		if (filter->isArray && filter->arraySize == 0)
+			return false;
+		
+		// Validate filter value
+		if (!filter->filterValue && !filter->isArray)
+			return false;
+		
+		// For arrays, validate array contents
+		if (filter->isArray && filter->filterValue)
+		{
+			void** array = (void**)filter->filterValue;
+			for (UInt32 i = 0; i < filter->arraySize; i++)
+			{
+				if (!array[i])
+					return false; // Null value in array
+			}
+		}
+		
+		return true;
 	}
 	
 	bool IsEventHandlerFirst(const char* eventName, EventHandlerCallback callback, void* context)

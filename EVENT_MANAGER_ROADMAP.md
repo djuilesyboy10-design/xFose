@@ -41,7 +41,7 @@ These features can be implemented without requiring the script system and provid
 - Update event registration to support aliases
 - Update event lookup to search by alias
 
-**Status:** Pending
+**Status:** Completed
 
 #### 1.2 Event Flags System
 - Add EventFlags enum (FlushOnLoad, UserDefined, AllowScriptDispatch, etc.)
@@ -49,7 +49,7 @@ These features can be implemented without requiring the script system and provid
 - Implement flag-based behavior (e.g., FlushOnLoad clears handlers on game load)
 - Update event registration to accept flags
 
-**Status:** Pending
+**Status:** Completed
 
 #### 1.3 More Internal Events
 - Add LoadGame event
@@ -62,7 +62,7 @@ These features can be implemented without requiring the script system and provid
 - Add NewGame event
 - Wire up hooks for these events
 
-**Status:** Pending
+**Status:** Completed
 
 #### 1.4 Better Debug Info
 - Add plugin name field to NativeEventHandlerInfo
@@ -71,7 +71,7 @@ These features can be implemented without requiring the script system and provid
 - Update logging to include plugin/handler names
 - Add GetNativeHandlerInfo function
 
-**Status:** Pending
+**Status:** Completed
 
 #### 1.5 Event Stack Tracking
 - Add s_eventStack to track event nesting
@@ -79,7 +79,7 @@ These features can be implemented without requiring the script system and provid
 - Add GetCurrentEventName function
 - Useful for debugging nested event handling
 
-**Status:** Pending
+**Status:** Completed
 
 ### Phase 2 - Medium Wins (Moderate complexity)
 
@@ -92,7 +92,7 @@ These features require moderate complexity but don't require the full script sys
 - Implement filter matching by parameter index
 - Add filter validation
 
-**Status:** Pending
+**Status:** Completed
 
 #### 2.2 Enhanced Priority System
 - Add special priorities (Highest, Default, Lowest)
@@ -100,7 +100,7 @@ These features require moderate complexity but don't require the full script sys
 - Add IsEventHandlerFirst/Last functions
 - Add GetHigher/LowerPriorityEventHandlers functions
 
-**Status:** Pending
+**Status:** Completed
 
 #### 2.3 GetEventHandlers with Filtering
 - Add GetEventHandlers function
@@ -108,14 +108,14 @@ These features require moderate complexity but don't require the full script sys
 - Return array of registered handlers
 - Useful for debugging and inspection
 
-**Status:** Pending
+**Status:** Completed
 
 #### 2.4 Deferred Remove
 - Add deferred removal list
 - Safe removal during iteration
 - Prevents crashes when removing handlers during dispatch
 
-**Status:** Pending
+**Status:** Completed
 
 ### Phase 3 - Hard Wins (Requires script system)
 
