@@ -198,6 +198,43 @@ Handlers can be safely removed during event dispatch:
 - Prevents iterator invalidation and crashes
 - Marked handlers are skipped during current dispatch
 
+## Faction Commands
+
+FOSE provides commands for managing actor factions and faction relationships:
+
+### Faction Rank Management
+
+- **GetFactionRank(faction, reference)** - Returns the rank of a reference in a faction
+- **SetFactionRank(faction, rank, reference)** - Sets the rank of a reference in a faction
+- **AddFaction(faction, rank, reference)** - Adds a reference to a faction with a specified rank
+- **RemoveFaction(faction, reference)** - Removes a reference from a faction
+
+Example:
+```cpp
+// Add player to Raider faction with rank 5
+AddFaction(RaiderFactionRef, 5, PlayerRef)
+
+// Set player's rank in Enclave faction to 0
+SetFactionRank(EnclaveFactionRef, 0, PlayerRef)
+
+// Get player's rank in a faction
+int rank = GetFactionRank(RaiderFactionRef, PlayerRef)
+```
+
+### Faction Reaction Management
+
+- **GetFactionReaction(factionA, factionB)** - Returns the reaction modifier between two factions
+- **SetFactionReaction(factionA, factionB, modifier)** - Sets the reaction modifier between two factions
+
+Example:
+```cpp
+// Set Brotherhood of Steel to hate the Enclave
+SetFactionReaction(BrotherhoodFactionRef, EnclaveFactionRef, -100)
+
+// Get reaction between two factions
+int reaction = GetFactionReaction(BrotherhoodFactionRef, EnclaveFactionRef)
+```
+
 ## Example Plugin
 
 ```cpp

@@ -363,5 +363,8 @@ extern "C" __declspec(dllexport) bool FOSEPlugin_Load(const FOSEInterface* fose)
     UInt32 handlerCount = g_eventManager->GetEventHandlers("OnHit", handlers, 10);
     Log("Phase 2 GetEventHandlers: OnHit has %d handlers", handlerCount);
 
+    // Faction commands test: Log availability
+    Log("Faction commands available: GetFactionRank, SetFactionRank, GetFactionReaction, SetFactionReaction, AddFaction, RemoveFaction");
+
     return true;
 }

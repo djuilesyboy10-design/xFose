@@ -1,6 +1,7 @@
 #include "CommandTable.h"
 #include "GameRTTI.h"
 #include "Commands_Console.h"
+#include "Commands_Faction.h"
 #include "Commands_Game.h"
 #include "Commands_Input.h"
 #include "Commands_Inventory.h"
@@ -1891,6 +1892,12 @@ void CommandTable::Init(void)
 #ifdef _DEBUG
 //	ADD_CMD(CloneForm);
 	ADD_CMD(ModelPathIncludes);
+	ADD_CMD(GetFactionRank);
+	ADD_CMD(SetFactionRank);
+	ADD_CMD(GetFactionReaction);
+	ADD_CMD(SetFactionReaction);
+	ADD_CMD(AddFaction);
+	ADD_CMD(RemoveFaction);
 	/*
 	ImportConsoleCommand("SetFog");
 	ImportConsoleCommand("SetClipDist");
