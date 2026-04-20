@@ -5,12 +5,13 @@ xFOSE is an updated, modernized continuation of the Fallout 3 Script Extender (F
 ## What's New
 
 - **Restored Event Manager** - The Event Manager was broken in the original FOSE and never worked. xFOSE fixes the initialization order bug and provides a fully working event system
-- **Event Handlers** - Plugins can register handlers for game events: OnHit, OnDeath, OnLoad, OnEquip, OnActivate, and more
+- **Event Handlers** - Plugins can register handlers for game events: OnHit, OnDeath, OnLoad, OnEquip, OnActivate, OnKeyDown, OnKeyUp, OnKeyPress, and more
 - **String Variables** - New script commands for string manipulation: create, set, get, concatenate, compare, and check validity with full save/load support
 - **Arrays** - New script commands for array operations: create, set, get, push, pop, remove, clear, and size with full save/load support
 - **Map and StringMap Containers** - New associative container types for key-value storage with full DataInterface support
 - **Logging Interface** - New LoggingManager singleton for file-based logging with log levels (Info, Warning, Error) accessible via DataInterface
 - **PlayerControls Interface** - New PlayerControlsManager singleton for input/control state checking and manipulation via DataInterface
+- **Input Events** - New OnKeyDown, OnKeyUp, and OnKeyPress events for responding to keyboard input
 - **DataInterface System** - Unified interface for accessing FOSE singletons and utility functions from plugins
 - **Codebase Modernization** - C++14 support, STL-style containers, modern string handling, RAII hook management, and plugin API helpers
 - **100% Backward Compatible** - Drop-in replacement for FOSE. All existing plugins and mods continue to work without modification

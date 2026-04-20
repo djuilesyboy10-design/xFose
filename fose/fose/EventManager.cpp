@@ -3,6 +3,7 @@
 #include "GameAPI.h"
 #include "GameData.h"
 #include "GameObjects.h"
+#include "Hooks_DirectInput8Create.h"
 #include <windows.h>
 
 namespace EventManager
@@ -162,6 +163,49 @@ namespace EventManager
 		
 		// Dispatch OnFrame event to all registered handlers
 		DispatchEventByID(kEventID_OnFrame, nullptr);
+		
+		// Check for input events using DirectInput
+		static UInt32 s_keyState[256] = {0};
+		static bool s_keyInitialized = false;
+		
+		if (!s_keyInitialized)
+		{
+			// Initialize key state tracking
+			for (UInt32 i = 0; i < 256; i++)
+				s_keyState[i] = 0;
+			s_keyInitialized = true;
+		}
+		
+		// Check keys 0-255 (keyboard)
+		for (UInt32 keycode = 0; keycode < 256; keycode++)
+		{
+			bool pressed = DI_data.IsKeyPressed(keycode);
+			
+			UInt32 newState = pressed ? 1 : 0;
+			UInt32 oldState = s_keyState[keycode];
+			
+			if (newState != oldState)
+			{
+				// Key state changed
+				s_keyState[keycode] = newState;
+				
+				void* params[1] = { (void*)keycode };
+				
+				if (newState)
+				{
+					// Key pressed
+					DispatchEventByID(kEventID_OnKeyDown, params);
+				}
+				else
+				{
+					// Key released
+					DispatchEventByID(kEventID_OnKeyUp, params);
+					
+					// Key press complete (down + up)
+					DispatchEventByID(kEventID_OnKeyPress, params);
+				}
+			}
+		}
 	}
 	
 	void Initialize()
@@ -203,6 +247,11 @@ namespace EventManager
 		// Special-cased game events
 		RegisterEvent("OnActivate", kEventID_OnActivate, kEventParams_OnActivate, 2);
 		RegisterEvent("OnFrame", kEventID_OnFrame, nullptr, 0);
+		
+		// Input events
+		RegisterEvent("OnKeyDown", kEventID_OnKeyDown, kEventParams_InputEvent, 1);
+		RegisterEvent("OnKeyUp", kEventID_OnKeyUp, kEventParams_InputEvent, 1);
+		RegisterEvent("OnKeyPress", kEventID_OnKeyPress, kEventParams_InputEvent, 1);
 		
 	}
 	

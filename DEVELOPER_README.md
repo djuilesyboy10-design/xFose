@@ -82,6 +82,15 @@ These events fire on specific game objects when scripted conditions are met:
 | Event Name | Description |
 |---|---|
 | OnActivate | Object activated (special parameter layout) |
+| OnFrame | Fires every frame (no parameters) |
+
+### Input Events
+
+| Event Name | Description | Parameters |
+|---|---|---|
+| OnKeyDown | Key pressed down | `params[0]`: keycode (UInt32) |
+| OnKeyUp | Key released | `params[0]`: keycode (UInt32) |
+| OnKeyPress | Key pressed and released | `params[0]`: keycode (UInt32) |
 
 ## Example Plugin
 

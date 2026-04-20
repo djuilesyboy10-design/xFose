@@ -80,4 +80,10 @@ namespace EventManager
 	{
 		kParamType_Reference, kParamType_Form
 	};
+
+	// Input events: (keyCode)
+	static ParamType kEventParams_InputEvent[1] =
+	{
+		kParamType_Int,
+	};
 }

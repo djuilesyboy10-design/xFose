@@ -52,6 +52,24 @@ void OnEquipHandler(void** params, void* context)
     Log("OnEquip fired! source=%08X target=%08X", params ? params[0] : 0, params ? params[1] : 0);
 }
 
+void OnKeyDownHandler(void** params, void* context)
+{
+    UInt32 keycode = params ? (UInt32)params[0] : 0;
+    Log("OnKeyDown fired! keycode=%d (0x%02X)", keycode, keycode);
+}
+
+void OnKeyUpHandler(void** params, void* context)
+{
+    UInt32 keycode = params ? (UInt32)params[0] : 0;
+    Log("OnKeyUp fired! keycode=%d (0x%02X)", keycode, keycode);
+}
+
+void OnKeyPressHandler(void** params, void* context)
+{
+    UInt32 keycode = params ? (UInt32)params[0] : 0;
+    Log("OnKeyPress fired! keycode=%d (0x%02X)", keycode, keycode);
+}
+
 extern "C" __declspec(dllexport) bool FOSEPlugin_Query(const FOSEInterface* fose, PluginInfo* info)
 {
     info->infoVersion = PluginInfo::kInfoVersion;
@@ -265,7 +283,12 @@ extern "C" __declspec(dllexport) bool FOSEPlugin_Load(const FOSEInterface* fose)
     bool r3 = g_eventManager->RegisterEventHandler("OnLoad", OnLoadHandler, nullptr, 0);
     bool r4 = g_eventManager->RegisterEventHandler("OnEquip", OnEquipHandler, nullptr, 0);
 
-    Log("RegisterEventHandler results: OnHit=%d OnDeath=%d OnLoad=%d OnEquip=%d", r1, r2, r3, r4);
+    // Register input event handlers
+    bool r5 = g_eventManager->RegisterEventHandler("OnKeyDown", OnKeyDownHandler, nullptr, 0);
+    bool r6 = g_eventManager->RegisterEventHandler("OnKeyUp", OnKeyUpHandler, nullptr, 0);
+    bool r7 = g_eventManager->RegisterEventHandler("OnKeyPress", OnKeyPressHandler, nullptr, 0);
+
+    Log("RegisterEventHandler results: OnHit=%d OnDeath=%d OnLoad=%d OnEquip=%d OnKeyDown=%d OnKeyUp=%d OnKeyPress=%d", r1, r2, r3, r4, r5, r6, r7);
 
     return true;
 }

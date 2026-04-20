@@ -55,8 +55,15 @@ namespace EventManager
 		
 		kEventID_GameEventMAX,
 		
+		// Input events (using PlayerControls system)
+		kEventID_OnKeyDown = kEventID_GameEventMAX,
+		kEventID_OnKeyUp,
+		kEventID_OnKeyPress,
+		
+		kEventID_InputEventMAX,
+		
 		// FOSE messaging events
-		kEventID_LoadGame = kEventID_GameEventMAX,
+		kEventID_LoadGame = kEventID_InputEventMAX,
 		kEventID_SaveGame,
 		kEventID_ExitGame,
 		
