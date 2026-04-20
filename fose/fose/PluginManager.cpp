@@ -131,9 +131,9 @@ static FOSEMessagingInterface g_FOSEMessagingInterface =
 };
 
 // Event manager wrapper functions
-static bool PluginAPI_RegisterEventHandler(const char* eventName, FOSEEventManagerInterface::EventHandlerCallback callback, void* context, UInt32 priority)
+static bool PluginAPI_RegisterEventHandler(const char* eventName, FOSEEventManagerInterface::EventHandlerCallback callback, void* context, UInt32 priority, const char* pluginName, const char* handlerName)
 {
-	return EventManager::RegisterEventHandler(eventName, callback, context, priority);
+	return EventManager::RegisterEventHandler(eventName, callback, context, priority, pluginName, handlerName);
 }
 
 static bool PluginAPI_RemoveEventHandler(const char* eventName, FOSEEventManagerInterface::EventHandlerCallback callback, void* context)
@@ -141,11 +141,29 @@ static bool PluginAPI_RemoveEventHandler(const char* eventName, FOSEEventManager
 	return EventManager::RemoveEventHandler(eventName, callback, context);
 }
 
+static bool PluginAPI_IsEventHandlerFirst(const char* eventName, FOSEEventManagerInterface::EventHandlerCallback callback, void* context)
+{
+	return EventManager::IsEventHandlerFirst(eventName, callback, context);
+}
+
+static bool PluginAPI_IsEventHandlerLast(const char* eventName, FOSEEventManagerInterface::EventHandlerCallback callback, void* context)
+{
+	return EventManager::IsEventHandlerLast(eventName, callback, context);
+}
+
+static UInt32 PluginAPI_GetEventHandlers(const char* eventName, void** outHandlers, UInt32 maxHandlers)
+{
+	return EventManager::GetEventHandlers(eventName, (EventManager::EventCallback**)outHandlers, maxHandlers);
+}
+
 static const FOSEEventManagerInterface g_FOSEEventManagerInterface =
 {
 	FOSEEventManagerInterface::kVersion,
 	PluginAPI_RegisterEventHandler,
-	PluginAPI_RemoveEventHandler
+	PluginAPI_RemoveEventHandler,
+	PluginAPI_IsEventHandlerFirst,
+	PluginAPI_IsEventHandlerLast,
+	PluginAPI_GetEventHandlers
 };
 
 PluginManager::PluginManager()

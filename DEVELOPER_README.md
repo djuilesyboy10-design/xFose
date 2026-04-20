@@ -151,6 +151,53 @@ The Event Manager now tracks event nesting for debugging:
 - Useful for debugging nested event handling
 - Empty string if no event is currently being dispatched
 
+## Phase 2 Features
+
+The Event Manager has been enhanced with the following advanced features:
+
+### Advanced Filtering System
+
+Event handlers can now filter based on parameter values:
+- Use `RegisterEventHandlerWithFilter()` to register a handler with a filter
+- Filters can be single values or arrays of values
+- Filters are checked before the handler is called
+- Useful for only handling events with specific targets or sources
+
+Example:
+```cpp
+// Create a filter for parameter index 1 (target)
+EventManager::EventFilter filter(1, targetFormPtr);
+
+// Register handler with filter
+g_eventManager->RegisterEventHandlerWithFilter("OnHit", MyHandler, &filter, nullptr, 0, "MyPlugin", "MyHitHandler");
+```
+
+### Enhanced Priority System
+
+Special priority values are available for common use cases:
+- `kPriority_Highest` (1000000) - Handlers called first
+- `kPriority_Default` (0) - Default priority
+- `kPriority_Lowest` (-1000000) - Handlers called last
+
+Example:
+```cpp
+g_eventManager->RegisterEventHandler("OnHit", MyHandler, nullptr, EventManager::kPriority_Highest, "MyPlugin", "MyHandler");
+```
+
+### Handler Inspection Functions
+
+Functions to inspect handler ordering and priority:
+- `IsEventHandlerFirst(eventName, callback, context)` - Check if handler is first in list
+- `IsEventHandlerLast(eventName, callback, context)` - Check if handler is last in list
+- `GetEventHandlers(eventName, outHandlers, maxHandlers)` - Get all handlers for an event
+
+### Deferred Removal
+
+Handlers can be safely removed during event dispatch:
+- Removal is deferred until after dispatch completes
+- Prevents iterator invalidation and crashes
+- Marked handlers are skipped during current dispatch
+
 ## Example Plugin
 
 ```cpp

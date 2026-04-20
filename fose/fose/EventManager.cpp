@@ -32,6 +32,10 @@ namespace EventManager
 	// Event stack for tracking event nesting (for debugging)
 	static std::stack<const char*> s_eventStack;
 	
+	// Deferred removal list for safe removal during event dispatch
+	static std::list<std::pair<std::string, EventCallback>> s_deferredRemovals;
+	static bool s_isDispatching = false;
+	
 	// Bitmask of events that have at least one handler registered
 	UInt32 s_eventsInUse = 0;
 	
@@ -391,6 +395,50 @@ namespace EventManager
 		return true;
 	}
 	
+	bool RegisterEventHandlerWithFilter(const char* eventName, EventHandlerCallback callback, EventFilter* filter, void* context, UInt32 priority, const char* pluginName, const char* handlerName)
+	{
+		if (!s_initialized || !eventName || !callback)
+			return false;
+		
+		// Check if event exists
+		auto it = s_eventNameMap.find(eventName);
+		if (it == s_eventNameMap.end())
+			return false;
+		
+		// Create handler
+		NativeEventHandlerInfo handler(callback, context, priority);
+		if (pluginName)
+			handler.m_pluginName = pluginName;
+		if (handlerName)
+			handler.m_handlerName = handlerName;
+		EventCallback eventCallback(handler, priority, filter);
+		
+		// Add to handler list
+		auto& handlerList = s_eventHandlers[eventName];
+		
+		// Check if handler already exists
+		for (const auto& existing : handlerList)
+		{
+			if (existing == eventCallback)
+				return false;
+		}
+		
+		// Insert in priority order (higher priority first)
+		handlerList.push_back(eventCallback);
+		handlerList.sort([](const EventCallback& a, const EventCallback& b) {
+			return a.priority > b.priority;
+		});
+		
+		// Update s_eventsInUse bitmask for ScriptEventList events
+		EventInfo* eventInfo = it->second;
+		if (eventInfo->evID < kEventID_ScriptEventListMAX) {
+			s_eventsInUse |= MaskForEventID(eventInfo->evID);
+			_MESSAGE("RegisterEventHandlerWithFilter: '%s' -> s_eventsInUse = 0x%08X", eventName, s_eventsInUse);
+		}
+		
+		return true;
+	}
+	
 	bool RemoveEventHandler(const char* eventName, EventHandlerCallback callback, void* context)
 	{
 		if (!s_initialized || !eventName || !callback)
@@ -408,8 +456,19 @@ namespace EventManager
 			if (it->nativeHandler.m_func == callback && 
 				it->nativeHandler.m_context == context)
 			{
-				handlerList.erase(it);
-				return true;
+				// If dispatching, defer removal to prevent iterator invalidation
+				if (s_isDispatching)
+				{
+					it->removed = true; // Mark for removal
+					s_deferredRemovals.push_back(std::make_pair(std::string(eventName), *it));
+					return true;
+				}
+				else
+				{
+					// Remove immediately if not dispatching
+					handlerList.erase(it);
+					return true;
+				}
 			}
 		}
 		
@@ -424,11 +483,15 @@ namespace EventManager
 		// Push event name to stack for tracking
 		s_eventStack.push(eventName);
 		
+		// Set dispatching flag for deferred removal
+		s_isDispatching = true;
+		
 		// Check if event has handlers
 		auto handlersIt = s_eventHandlers.find(eventName);
 		if (handlersIt == s_eventHandlers.end())
 		{
 			s_eventStack.pop();
+			s_isDispatching = false;
 			return;
 		}
 		
@@ -437,6 +500,7 @@ namespace EventManager
 		if (eventIt == s_eventNameMap.end())
 		{
 			s_eventStack.pop();
+			s_isDispatching = false;
 			return;
 		}
 		
@@ -449,6 +513,10 @@ namespace EventManager
 			if (handler.removed)
 				continue;
 			
+			// Check filter before calling handler
+			if (handler.filter && !FilterMatches(handler.filter, params))
+				continue; // Filter doesn't match, skip this handler
+			
 			if (handler.nativeHandler.m_func)
 			{
 				// Log handler invocation with debug info
@@ -460,8 +528,28 @@ namespace EventManager
 			}
 		}
 		
+		// Process deferred removals
+		for (const auto& deferred : s_deferredRemovals)
+		{
+			const std::string& evName = deferred.first;
+			const EventCallback& callback = deferred.second;
+			
+			auto deferredHandlersIt = s_eventHandlers.find(evName);
+			if (deferredHandlersIt != s_eventHandlers.end())
+			{
+				auto& deferredHandlerList = deferredHandlersIt->second;
+				deferredHandlerList.remove_if([&callback](const EventCallback& cb) {
+					return cb == callback;
+				});
+			}
+		}
+		s_deferredRemovals.clear();
+		
 		// Clean up removed handlers
 		handlerList.remove_if([](const EventCallback& cb) { return cb.removed; });
+		
+		// Reset dispatching flag
+		s_isDispatching = false;
 		
 		// Pop event name from stack
 		s_eventStack.pop();
@@ -533,6 +621,211 @@ namespace EventManager
 			return "";
 		
 		return s_eventStack.top();
+	}
+	
+	bool FilterMatches(const EventFilter* filter, void** params)
+	{
+		if (!filter || !params)
+			return true; // No filter means always match
+		
+		// Check if parameter index is valid
+		UInt32 paramIndex = filter->paramIndex;
+		if (!params[paramIndex])
+			return false; // Parameter is null, can't match
+		
+		// Simple pointer comparison for now
+		// TODO: Implement proper value comparison based on parameter type
+		if (filter->isArray)
+		{
+			// Array-based filter: check if param matches any value in array
+			void** array = (void**)filter->filterValue;
+			for (UInt32 i = 0; i < filter->arraySize; i++)
+			{
+				if (array[i] == params[paramIndex])
+					return true; // Match found
+			}
+			return false; // No match in array
+		}
+		else
+		{
+			// Single value filter: direct comparison
+			return filter->filterValue == params[paramIndex];
+		}
+	}
+	
+	bool IsEventHandlerFirst(const char* eventName, EventHandlerCallback callback, void* context)
+	{
+		if (!s_initialized || !eventName || !callback)
+			return false;
+		
+		auto handlersIt = s_eventHandlers.find(eventName);
+		if (handlersIt == s_eventHandlers.end())
+			return false;
+		
+		auto& handlerList = handlersIt->second;
+		if (handlerList.empty())
+			return false;
+		
+		// Check if the first handler matches
+		auto& firstHandler = handlerList.front();
+		return firstHandler.nativeHandler.m_func == callback && firstHandler.nativeHandler.m_context == context;
+	}
+	
+	bool IsEventHandlerLast(const char* eventName, EventHandlerCallback callback, void* context)
+	{
+		if (!s_initialized || !eventName || !callback)
+			return false;
+		
+		auto handlersIt = s_eventHandlers.find(eventName);
+		if (handlersIt == s_eventHandlers.end())
+			return false;
+		
+		auto& handlerList = handlersIt->second;
+		if (handlerList.empty())
+			return false;
+		
+		// Check if the last handler matches
+		auto& lastHandler = handlerList.back();
+		return lastHandler.nativeHandler.m_func == callback && lastHandler.nativeHandler.m_context == context;
+	}
+	
+	UInt32 GetHigherPriorityEventHandlers(const char* eventName, EventHandlerCallback callback, void* context, EventCallback** outHandlers, UInt32 maxHandlers)
+	{
+		if (!s_initialized || !eventName || !callback)
+			return 0;
+		
+		auto handlersIt = s_eventHandlers.find(eventName);
+		if (handlersIt == s_eventHandlers.end())
+			return 0;
+		
+		auto& handlerList = handlersIt->second;
+		
+		// Find the handler to compare against
+		UInt32 targetPriority = 0;
+		bool found = false;
+		for (const auto& handler : handlerList)
+		{
+			if (handler.nativeHandler.m_func == callback && handler.nativeHandler.m_context == context)
+			{
+				targetPriority = handler.priority;
+				found = true;
+				break;
+			}
+		}
+		
+		if (!found)
+			return 0;
+		
+		// Count and collect handlers with higher priority
+		UInt32 count = 0;
+		if (outHandlers && maxHandlers > 0)
+		{
+			for (const auto& handler : handlerList)
+			{
+				if (handler.priority > targetPriority)
+				{
+					if (count < maxHandlers)
+						outHandlers[count] = const_cast<EventCallback*>(&handler);
+					count++;
+				}
+			}
+		}
+		else
+		{
+			// Just count if no output buffer
+			for (const auto& handler : handlerList)
+			{
+				if (handler.priority > targetPriority)
+					count++;
+			}
+		}
+		
+		return count;
+	}
+	
+	UInt32 GetLowerPriorityEventHandlers(const char* eventName, EventHandlerCallback callback, void* context, EventCallback** outHandlers, UInt32 maxHandlers)
+	{
+		if (!s_initialized || !eventName || !callback)
+			return 0;
+		
+		auto handlersIt = s_eventHandlers.find(eventName);
+		if (handlersIt == s_eventHandlers.end())
+			return 0;
+		
+		auto& handlerList = handlersIt->second;
+		
+		// Find the handler to compare against
+		UInt32 targetPriority = 0;
+		bool found = false;
+		for (const auto& handler : handlerList)
+		{
+			if (handler.nativeHandler.m_func == callback && handler.nativeHandler.m_context == context)
+			{
+				targetPriority = handler.priority;
+				found = true;
+				break;
+			}
+		}
+		
+		if (!found)
+			return 0;
+		
+		// Count and collect handlers with lower priority
+		UInt32 count = 0;
+		if (outHandlers && maxHandlers > 0)
+		{
+			for (const auto& handler : handlerList)
+			{
+				if (handler.priority < targetPriority)
+				{
+					if (count < maxHandlers)
+						outHandlers[count] = const_cast<EventCallback*>(&handler);
+					count++;
+				}
+			}
+		}
+		else
+		{
+			// Just count if no output buffer
+			for (const auto& handler : handlerList)
+			{
+				if (handler.priority < targetPriority)
+					count++;
+			}
+		}
+		
+		return count;
+	}
+	
+	UInt32 GetEventHandlers(const char* eventName, EventCallback** outHandlers, UInt32 maxHandlers)
+	{
+		if (!s_initialized || !eventName)
+			return 0;
+		
+		auto handlersIt = s_eventHandlers.find(eventName);
+		if (handlersIt == s_eventHandlers.end())
+			return 0;
+		
+		auto& handlerList = handlersIt->second;
+		
+		// Count handlers
+		UInt32 count = 0;
+		if (outHandlers && maxHandlers > 0)
+		{
+			for (const auto& handler : handlerList)
+			{
+				if (count < maxHandlers)
+					outHandlers[count] = const_cast<EventCallback*>(&handler);
+				count++;
+			}
+		}
+		else
+		{
+			// Just count if no output buffer
+			count = handlerList.size();
+		}
+		
+		return count;
 	}
 	
 	void InstallGameHooks()

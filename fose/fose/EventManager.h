@@ -15,6 +15,14 @@ namespace EventManager
 	// context: optional context pointer (can be null)
 	typedef void (*EventHandlerCallback)(void** params, void* context);
 
+	// Special priority values for event handlers
+	enum HandlerPriority
+	{
+		kPriority_Highest = 1000000,	// Highest priority handlers called first
+		kPriority_Default = 0,			// Default priority
+		kPriority_Lowest = -1000000,	// Lowest priority handlers called last
+	};
+
 	// Event flags - control event behavior
 	enum EventFlags
 	{
@@ -129,16 +137,30 @@ namespace EventManager
 		operator bool() const { return m_func != nullptr; }
 	};
 
+	// Event filter structure - allows filtering handlers by parameter values
+	struct EventFilter
+	{
+		UInt32		paramIndex;		// Parameter index to filter on (0-based)
+		void*		filterValue;	// Value to match (can be single value or array pointer)
+		bool		isArray;		// True if filterValue is an array of values
+		UInt32		arraySize;		// Size of array if isArray is true
+		
+		EventFilter() : paramIndex(0), filterValue(nullptr), isArray(false), arraySize(0) {}
+		EventFilter(UInt32 idx, void* value, bool array = false, UInt32 size = 0)
+			: paramIndex(idx), filterValue(value), isArray(array), arraySize(size) {}
+	};
+
 	// Event callback structure
 	struct EventCallback
 	{
 		NativeEventHandlerInfo	nativeHandler;	// Native handler (for now, only this is used)
 		UInt32					priority;		// Handler priority
 		bool					removed;		// Flag for removal during iteration
+		EventFilter*			filter;			// Optional filter for this handler
 		
-		EventCallback() : priority(0), removed(false) {}
-		EventCallback(const NativeEventHandlerInfo& handler, UInt32 prio = 0)
-			: nativeHandler(handler), priority(prio), removed(false) {}
+		EventCallback() : priority(0), removed(false), filter(nullptr) {}
+		EventCallback(const NativeEventHandlerInfo& handler, UInt32 prio = 0, EventFilter* filt = nullptr)
+			: nativeHandler(handler), priority(prio), removed(false), filter(filt) {}
 		
 		bool operator==(const EventCallback& rhs) const
 		{
@@ -165,6 +187,10 @@ namespace EventManager
 	// Returns true if handler was registered successfully
 	bool RegisterEventHandler(const char* eventName, EventHandlerCallback callback, void* context = nullptr, UInt32 priority = 0, const char* pluginName = nullptr, const char* handlerName = nullptr);
 	
+	// Register a native event handler with filter
+	// Returns true if handler was registered successfully
+	bool RegisterEventHandlerWithFilter(const char* eventName, EventHandlerCallback callback, EventFilter* filter, void* context = nullptr, UInt32 priority = 0, const char* pluginName = nullptr, const char* handlerName = nullptr);
+	
 	// Remove a native event handler
 	// Returns true if handler was found and removed
 	bool RemoveEventHandler(const char* eventName, EventHandlerCallback callback, void* context = nullptr);
@@ -189,6 +215,22 @@ namespace EventManager
 	
 	// Get current event name (for debugging nested event handling)
 	const char* GetCurrentEventName();
+	
+	// Check if a filter matches the given parameters
+	bool FilterMatches(const EventFilter* filter, void** params);
+	
+	// Check if a handler is the first/last in the handler list for an event
+	bool IsEventHandlerFirst(const char* eventName, EventHandlerCallback callback, void* context = nullptr);
+	bool IsEventHandlerLast(const char* eventName, EventHandlerCallback callback, void* context = nullptr);
+	
+	// Get handlers with higher/lower priority than a given handler
+	// Returns count of handlers found
+	UInt32 GetHigherPriorityEventHandlers(const char* eventName, EventHandlerCallback callback, void* context = nullptr, EventCallback** outHandlers = nullptr, UInt32 maxHandlers = 0);
+	UInt32 GetLowerPriorityEventHandlers(const char* eventName, EventHandlerCallback callback, void* context = nullptr, EventCallback** outHandlers = nullptr, UInt32 maxHandlers = 0);
+	
+	// Get all handlers for an event
+	// Returns count of handlers found
+	UInt32 GetEventHandlers(const char* eventName, EventCallback** outHandlers = nullptr, UInt32 maxHandlers = 0);
 	
 	// Install hooks for game events (called during initialization)
 	void InstallGameHooks();

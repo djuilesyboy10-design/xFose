@@ -318,6 +318,14 @@ struct FOSEEventManagerInterface
 	// context: the context pointer used during registration
 	// returns: true on success, false on failure
 	bool (* RemoveEventHandler)(const char* eventName, EventHandlerCallback callback, void* context);
+	
+	// Check if a handler is the first/last in the handler list for an event
+	bool (* IsEventHandlerFirst)(const char* eventName, EventHandlerCallback callback, void* context);
+	bool (* IsEventHandlerLast)(const char* eventName, EventHandlerCallback callback, void* context);
+	
+	// Get all handlers for an event
+	// Returns count of handlers found
+	UInt32 (* GetEventHandlers)(const char* eventName, void** outHandlers, UInt32 maxHandlers);
 };
 
 /**** UI manipulation API docs **************************************************

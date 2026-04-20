@@ -106,6 +106,17 @@ void OnRenameGameHandler(void** params, void* context)
     Log("OnRenameGame fired!");
 }
 
+// Phase 2 test handlers
+void OnHitHighPriorityHandler(void** params, void* context)
+{
+    Log("OnHitHighPriorityHandler fired!");
+}
+
+void OnHitLowPriorityHandler(void** params, void* context)
+{
+    Log("OnHitLowPriorityHandler fired!");
+}
+
 extern "C" __declspec(dllexport) bool FOSEPlugin_Query(const FOSEInterface* fose, PluginInfo* info)
 {
     info->infoVersion = PluginInfo::kInfoVersion;
@@ -335,6 +346,22 @@ extern "C" __declspec(dllexport) bool FOSEPlugin_Load(const FOSEInterface* fose)
 
     Log("RegisterEventHandler results: OnHit=%d OnDeath=%d OnLoad=%d OnEquip=%d OnKeyDown=%d OnKeyUp=%d OnKeyPress=%d", r1, r2, r3, r4, r5, r6, r7);
     Log("Phase 1 event handlers: OnLoadGame=%d OnSaveGame=%d OnExitGame=%d OnExitToMainMenu=%d OnNewGame=%d OnDeleteGame=%d OnRenameGame=%d", r8, r9, r10, r11, r12, r13, r14);
+
+    // Phase 2 test: Register handlers with different priorities
+    bool r15 = g_eventManager->RegisterEventHandler("OnHit", OnHitHighPriorityHandler, nullptr, 1000000, "TestEventPlugin", "OnHitHighPriorityHandler"); // Highest priority
+    bool r16 = g_eventManager->RegisterEventHandler("OnHit", OnHitLowPriorityHandler, nullptr, -1000000, "TestEventPlugin", "OnHitLowPriorityHandler"); // Lowest priority
+
+    Log("Phase 2 priority test: OnHitHighPriority=%d OnHitLowPriority=%d", r15, r16);
+
+    // Phase 2 test: Test IsEventHandlerFirst/Last
+    bool isFirst = g_eventManager->IsEventHandlerFirst("OnHit", OnHitHighPriorityHandler, nullptr);
+    bool isLast = g_eventManager->IsEventHandlerLast("OnHit", OnHitLowPriorityHandler, nullptr);
+    Log("Phase 2 priority check: IsEventHandlerFirst(high)=%d IsEventHandlerLast(low)=%d", isFirst, isLast);
+
+    // Phase 2 test: Test GetEventHandlers
+    void* handlers[10];
+    UInt32 handlerCount = g_eventManager->GetEventHandlers("OnHit", handlers, 10);
+    Log("Phase 2 GetEventHandlers: OnHit has %d handlers", handlerCount);
 
     return true;
 }
