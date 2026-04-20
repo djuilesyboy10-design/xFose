@@ -1,0 +1,115 @@
+xFOSE Changelog
+===============
+
+Version 1.0 - Initial Release
+============================
+
+DataInterface Enhancements
+--------------------------
+- Added kFOSEData_NumLoadedPlugins data ID (2) - Returns number of loaded plugins
+- Added kFOSEData_FOSEVersion data ID (3) - Returns FOSE version number (0x01030032 for FOSE 1.3.2)
+- Added DataInterface_GetData function to expose runtime data values
+- Added ClearScriptDataCache function for performance optimization
+
+FormExtraData System (NEW)
+---------------------------
+- Implemented complete FormExtraData manager for managing extra data attached to game forms
+- Added kFOSEData_FormExtraDataGet (1) - Get extra data by name from a form
+- Added kFOSEData_FormExtraDataGetAll (2) - Get all extra data from a form
+- Added kFOSEData_FormExtraDataAdd (3) - Add extra data to a form
+- Added kFOSEData_FormExtraDataRemoveByName (4) - Remove extra data by name
+- Added kFOSEData_FormExtraDataRemoveByPtr (5) - Remove extra data by pointer
+- Added kFOSEData_FormExtraDataCount (6) - Count extra data entries on a form
+- Added kFOSEData_FormExtraDataExists (7) - Check if extra data exists on a form
+- Added kFOSEData_FormExtraDataIterate (8) - Iterate through all extra data on a form
+- All FormExtraData functions use thread-safe critical section access
+- Created FormExtraData.cpp and FormExtraData.h files
+
+ArrayVarManager Enhancements
+----------------------------
+Simple Enhancements:
+- Added kFOSEData_ArrayVarMapDeleteBySelf (9) - Delete array by self (cleanup function)
+- Added kFOSEData_ArrayVarInsertAt (11) - Insert element at specific index in array
+- Added kFOSEData_ArrayVarFindByValue (12) - Find element by value, returns index
+- Added kFOSEData_ArrayVarCountByType (13) - Count elements by type (Integer, Float, String)
+
+Medium Enhancements:
+- Added kFOSEData_ArrayVarSort (18) - Sort array elements in ascending order
+  * Elements sorted first by type, then by value
+  * Uses std::sort with custom comparator
+- Added kFOSEData_ArrayVarReverse (19) - Reverse array element order
+  * Uses std::reverse
+- Added kFOSEData_ArrayVarShuffle (20) - Randomly shuffle array elements
+  * Uses std::random_shuffle
+- Added #include <algorithm> to ArrayVar.cpp for sort/reverse/shuffle functions
+
+StringVarManager Enhancements
+-----------------------------
+Simple Enhancements:
+- Added kFOSEData_StringVarMapDeleteBySelf (10) - Delete string by self (cleanup function)
+- Added kFOSEData_StringVarGetLength (14) - Get string length
+- Added kFOSEData_StringVarCompare (15) - Compare two strings (returns 0 if equal)
+- Added kFOSEData_StringVarConcatenate (16) - Concatenate two strings (creates new string)
+- Added kFOSEData_StringVarSubstring (17) - Extract substring (creates new string)
+
+Medium Enhancements:
+- Added kFOSEData_StringVarUppercase (21) - Convert string to uppercase (in-place)
+- Added kFOSEData_StringVarLowercase (22) - Convert string to lowercase (in-place)
+- Added kFOSEData_StringVarTrim (23) - Remove leading/trailing whitespace (in-place)
+  * Handles spaces, tabs, newlines, and carriage returns
+- Added kFOSEData_StringVarReplace (24) - Replace occurrences of substring (in-place)
+  * Returns number of replacements made
+
+DataInterface Function Wiring
+-----------------------------
+- Updated DataInterface_GetFunc in DataInterface.cpp to return all new function pointers
+- Added static wrapper functions for all non-static member functions
+- All functions exposed through DataInterface with proper function IDs
+- Total: 24 DataInterface functions now available to plugins
+
+TestEventPlugin Updates
+-----------------------
+- Added test code for all new DataInterface functions
+- Test code logs function pointer addresses during plugin load
+- All new functions verified to return valid pointers
+- Runtime testing confirmed stable operation
+
+Technical Details
+-----------------
+- All implementations use static wrapper functions to expose member functions through DataInterface
+- Thread-safe access using critical sections where appropriate
+- Consistent error handling with _MESSAGE logging
+- All functions return appropriate success/failure indicators
+- Clean separation between implementation and interface
+
+Build System
+------------
+- Fixed build errors by adding missing #include <algorithm> to ArrayVar.cpp
+- Fixed FOSE_VERSION undeclared identifier by using hardcoded version value
+- FOSE DLL builds successfully in Debug configuration
+- TestEventPlugin builds and loads correctly
+
+Documentation
+-------------
+- Created xFOSE_Description.txt with comprehensive feature list
+- Created CHANGELOG.txt for version tracking
+- All functions documented with clear descriptions
+- Usage examples provided for mod makers
+
+Git Repository
+--------------
+- All changes committed to main branch
+- Commit message: "Implement DataInterface and manager enhancements"
+- 9 files changed, 1024 insertions(+), 2 deletions(-)
+- Created FormExtraData.cpp and FormExtraData.h files
+- Pushed to GitHub repository
+
+Total Changes
+-------------
+- 24 new DataInterface functions exposed
+- 2 new data IDs added
+- Complete FormExtraData system implemented
+- 6 ArrayVarManager enhancement functions
+- 8 StringVarManager enhancement functions
+- 2 cleanup functions added
+- All functions tested and verified working

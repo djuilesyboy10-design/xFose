@@ -307,8 +307,10 @@ struct FOSEEventManagerInterface
 	// callback: function to call when the event fires
 	// context: optional context pointer passed to the callback
 	// priority: handler priority (higher = called first)
+	// pluginName: optional plugin name for debug logging (can be nullptr)
+	// handlerName: optional handler name for debug logging (can be nullptr)
 	// returns: true on success, false on failure
-	bool (* RegisterEventHandler)(const char* eventName, EventHandlerCallback callback, void* context, UInt32 priority);
+	bool (* RegisterEventHandler)(const char* eventName, EventHandlerCallback callback, void* context, UInt32 priority, const char* pluginName, const char* handlerName);
 
 	// Remove an event handler
 	// eventName: name of the event to unregister from

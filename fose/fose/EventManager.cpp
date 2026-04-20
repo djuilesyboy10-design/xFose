@@ -5,6 +5,7 @@
 #include "GameObjects.h"
 #include "Hooks_DirectInput8Create.h"
 #include <windows.h>
+#include <stack>
 
 namespace EventManager
 {
@@ -27,6 +28,9 @@ namespace EventManager
 	static void* s_lastOnHitWithWeapon = nullptr;
 	static void* s_lastOnHitVictim = nullptr;
 	static void* s_lastOnHitAttacker = nullptr;
+	
+	// Event stack for tracking event nesting (for debugging)
+	static std::stack<const char*> s_eventStack;
 	
 	// Bitmask of events that have at least one handler registered
 	UInt32 s_eventsInUse = 0;
@@ -253,6 +257,17 @@ namespace EventManager
 		RegisterEvent("OnKeyUp", kEventID_OnKeyUp, kEventParams_InputEvent, 1);
 		RegisterEvent("OnKeyPress", kEventID_OnKeyPress, kEventParams_InputEvent, 1);
 		
+		// Internal events (save/load, game state)
+		RegisterEvent("OnLoadGame", kEventID_LoadGame, nullptr, 0);
+		RegisterEvent("OnSaveGame", kEventID_SaveGame, nullptr, 0);
+		RegisterEvent("OnExitGame", kEventID_ExitGame, nullptr, 0);
+		RegisterEvent("OnExitToMainMenu", kEventID_ExitToMainMenu, nullptr, 0);
+		RegisterEvent("OnPostLoadGame", kEventID_PostLoadGame, nullptr, 0);
+		RegisterEvent("OnDeleteGame", kEventID_DeleteGame, nullptr, 0);
+		RegisterEvent("OnRenameGame", kEventID_RenameGame, nullptr, 0);
+		RegisterEvent("OnNewGame", kEventID_NewGame, nullptr, 0);
+		RegisterEvent("OnPreLoadGame", kEventID_PreLoadGame, nullptr, 0);
+		
 	}
 	
 	void Shutdown()
@@ -271,7 +286,22 @@ namespace EventManager
 		s_initialized = false;
 	}
 	
-	bool RegisterEvent(const char* eventName, EventID evID, ParamType* paramTypes, UInt8 numParams)
+	void ClearFlushOnLoadEventHandlers()
+	{
+		if (!s_initialized)
+			return;
+		
+		// Iterate through all events and clear handlers for those with FlushOnLoad flag
+		for (auto& eventInfo : s_eventInfos)
+		{
+			if (eventInfo.flags & kEventFlag_FlushOnLoad)
+			{
+				s_eventHandlers[eventInfo.evName].clear();
+			}
+		}
+	}
+	
+	bool RegisterEvent(const char* eventName, EventID evID, ParamType* paramTypes, UInt8 numParams, const char* alias, EventFlags flags)
 	{
 		if (!s_initialized || !eventName)
 			return false;
@@ -283,19 +313,31 @@ namespace EventManager
 		if (evID != kEventID_UserDefined && s_eventIDMap.find(evID) != s_eventIDMap.end())
 			return false;
 		
+		// Check if alias is already used
+		if (alias && s_eventNameMap.find(alias) != s_eventNameMap.end())
+			return false;
+		
 		// Create new event info
 		EventInfo newEvent;
 		newEvent.evName = eventName;
+		if (alias)
+			newEvent.alias = alias;
 		newEvent.evID = evID;
 		newEvent.paramTypes = paramTypes;
 		newEvent.numParams = numParams;
-		newEvent.flags = 0;
+		newEvent.flags = flags;
 		
 		// Add to storage
 		s_eventInfos.push_back(newEvent);
 		EventInfo* eventPtr = &s_eventInfos.back();
 		
 		s_eventNameMap[eventName] = eventPtr;
+		
+		// Also register alias if provided
+		if (alias)
+		{
+			s_eventNameMap[alias] = eventPtr;
+		}
 		
 		if (evID != kEventID_UserDefined)
 		{
@@ -305,7 +347,7 @@ namespace EventManager
 		return true;
 	}
 	
-	bool RegisterEventHandler(const char* eventName, EventHandlerCallback callback, void* context, UInt32 priority)
+	bool RegisterEventHandler(const char* eventName, EventHandlerCallback callback, void* context, UInt32 priority, const char* pluginName, const char* handlerName)
 	{
 		if (!s_initialized || !eventName || !callback)
 			return false;
@@ -317,6 +359,10 @@ namespace EventManager
 		
 		// Create handler
 		NativeEventHandlerInfo handler(callback, context, priority);
+		if (pluginName)
+			handler.m_pluginName = pluginName;
+		if (handlerName)
+			handler.m_handlerName = handlerName;
 		EventCallback eventCallback(handler, priority);
 		
 		// Add to handler list
@@ -375,15 +421,24 @@ namespace EventManager
 		if (!s_initialized || !eventName)
 			return;
 		
+		// Push event name to stack for tracking
+		s_eventStack.push(eventName);
+		
 		// Check if event has handlers
 		auto handlersIt = s_eventHandlers.find(eventName);
 		if (handlersIt == s_eventHandlers.end())
+		{
+			s_eventStack.pop();
 			return;
+		}
 		
 		// Get event info
 		auto eventIt = s_eventNameMap.find(eventName);
 		if (eventIt == s_eventNameMap.end())
+		{
+			s_eventStack.pop();
 			return;
+		}
 		
 		const EventInfo* eventInfo = eventIt->second;
 		
@@ -396,12 +451,20 @@ namespace EventManager
 			
 			if (handler.nativeHandler.m_func)
 			{
+				// Log handler invocation with debug info
+				const char* pluginName = handler.nativeHandler.m_pluginName.empty() ? "[Unknown]" : handler.nativeHandler.m_pluginName.c_str();
+				const char* handlerName = handler.nativeHandler.m_handlerName.empty() ? "[Unnamed]" : handler.nativeHandler.m_handlerName.c_str();
+				_MESSAGE("DispatchEvent: Calling handler '%s::%s' for event '%s'", pluginName, handlerName, eventName);
+				
 				handler.nativeHandler.m_func(params, handler.nativeHandler.m_context);
 			}
 		}
 		
 		// Clean up removed handlers
 		handlerList.remove_if([](const EventCallback& cb) { return cb.removed; });
+		
+		// Pop event name from stack
+		s_eventStack.pop();
 	}
 	
 	void DispatchEventByID(EventID evID, void** params)
@@ -450,6 +513,26 @@ namespace EventManager
 			return false;
 		
 		return s_eventNameMap.find(eventName) != s_eventNameMap.end();
+	}
+	
+	const char* GetEventAlias(const char* eventName)
+	{
+		if (!s_initialized || !eventName)
+			return "";
+		
+		const EventInfo* eventInfo = GetEventInfo(eventName);
+		if (eventInfo && !eventInfo->alias.empty())
+			return eventInfo->alias.c_str();
+		
+		return "";
+	}
+	
+	const char* GetCurrentEventName()
+	{
+		if (!s_initialized || s_eventStack.empty())
+			return "";
+		
+		return s_eventStack.top();
 	}
 	
 	void InstallGameHooks()

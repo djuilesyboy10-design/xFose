@@ -70,6 +70,42 @@ void OnKeyPressHandler(void** params, void* context)
     Log("OnKeyPress fired! keycode=%d (0x%02X)", keycode, keycode);
 }
 
+// Phase 1 test handlers
+void OnLoadGameHandler(void** params, void* context)
+{
+    Log("OnLoadGame fired!");
+}
+
+void OnSaveGameHandler(void** params, void* context)
+{
+    Log("OnSaveGame fired!");
+}
+
+void OnExitGameHandler(void** params, void* context)
+{
+    Log("OnExitGame fired!");
+}
+
+void OnExitToMainMenuHandler(void** params, void* context)
+{
+    Log("OnExitToMainMenu fired!");
+}
+
+void OnNewGameHandler(void** params, void* context)
+{
+    Log("OnNewGame fired!");
+}
+
+void OnDeleteGameHandler(void** params, void* context)
+{
+    Log("OnDeleteGame fired!");
+}
+
+void OnRenameGameHandler(void** params, void* context)
+{
+    Log("OnRenameGame fired!");
+}
+
 extern "C" __declspec(dllexport) bool FOSEPlugin_Query(const FOSEInterface* fose, PluginInfo* info)
 {
     info->infoVersion = PluginInfo::kInfoVersion;
@@ -278,17 +314,27 @@ extern "C" __declspec(dllexport) bool FOSEPlugin_Load(const FOSEInterface* fose)
         }
     }
 
-    bool r1 = g_eventManager->RegisterEventHandler("OnHit", OnHitHandler, nullptr, 0);
-    bool r2 = g_eventManager->RegisterEventHandler("OnDeath", OnDeathHandler, nullptr, 0);
-    bool r3 = g_eventManager->RegisterEventHandler("OnLoad", OnLoadHandler, nullptr, 0);
-    bool r4 = g_eventManager->RegisterEventHandler("OnEquip", OnEquipHandler, nullptr, 0);
+    bool r1 = g_eventManager->RegisterEventHandler("OnHit", OnHitHandler, nullptr, 0, nullptr, nullptr);
+    bool r2 = g_eventManager->RegisterEventHandler("OnDeath", OnDeathHandler, nullptr, 0, nullptr, nullptr);
+    bool r3 = g_eventManager->RegisterEventHandler("OnLoad", OnLoadHandler, nullptr, 0, nullptr, nullptr);
+    bool r4 = g_eventManager->RegisterEventHandler("OnEquip", OnEquipHandler, nullptr, 0, nullptr, nullptr);
 
     // Register input event handlers
-    bool r5 = g_eventManager->RegisterEventHandler("OnKeyDown", OnKeyDownHandler, nullptr, 0);
-    bool r6 = g_eventManager->RegisterEventHandler("OnKeyUp", OnKeyUpHandler, nullptr, 0);
-    bool r7 = g_eventManager->RegisterEventHandler("OnKeyPress", OnKeyPressHandler, nullptr, 0);
+    bool r5 = g_eventManager->RegisterEventHandler("OnKeyDown", OnKeyDownHandler, nullptr, 0, nullptr, nullptr);
+    bool r6 = g_eventManager->RegisterEventHandler("OnKeyUp", OnKeyUpHandler, nullptr, 0, nullptr, nullptr);
+    bool r7 = g_eventManager->RegisterEventHandler("OnKeyPress", OnKeyPressHandler, nullptr, 0, nullptr, nullptr);
+
+    // Register Phase 1 test handlers with plugin/handler names for debug info
+    bool r8 = g_eventManager->RegisterEventHandler("OnLoadGame", OnLoadGameHandler, nullptr, 0, "TestEventPlugin", "OnLoadGameHandler");
+    bool r9 = g_eventManager->RegisterEventHandler("OnSaveGame", OnSaveGameHandler, nullptr, 0, "TestEventPlugin", "OnSaveGameHandler");
+    bool r10 = g_eventManager->RegisterEventHandler("OnExitGame", OnExitGameHandler, nullptr, 0, "TestEventPlugin", "OnExitGameHandler");
+    bool r11 = g_eventManager->RegisterEventHandler("OnExitToMainMenu", OnExitToMainMenuHandler, nullptr, 0, "TestEventPlugin", "OnExitToMainMenuHandler");
+    bool r12 = g_eventManager->RegisterEventHandler("OnNewGame", OnNewGameHandler, nullptr, 0, "TestEventPlugin", "OnNewGameHandler");
+    bool r13 = g_eventManager->RegisterEventHandler("OnDeleteGame", OnDeleteGameHandler, nullptr, 0, "TestEventPlugin", "OnDeleteGameHandler");
+    bool r14 = g_eventManager->RegisterEventHandler("OnRenameGame", OnRenameGameHandler, nullptr, 0, "TestEventPlugin", "OnRenameGameHandler");
 
     Log("RegisterEventHandler results: OnHit=%d OnDeath=%d OnLoad=%d OnEquip=%d OnKeyDown=%d OnKeyUp=%d OnKeyPress=%d", r1, r2, r3, r4, r5, r6, r7);
+    Log("Phase 1 event handlers: OnLoadGame=%d OnSaveGame=%d OnExitGame=%d OnExitToMainMenu=%d OnNewGame=%d OnDeleteGame=%d OnRenameGame=%d", r8, r9, r10, r11, r12, r13, r14);
 
     return true;
 }

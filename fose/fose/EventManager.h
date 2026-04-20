@@ -15,6 +15,16 @@ namespace EventManager
 	// context: optional context pointer (can be null)
 	typedef void (*EventHandlerCallback)(void** params, void* context);
 
+	// Event flags - control event behavior
+	enum EventFlags
+	{
+		kEventFlag_None = 0,
+		kEventFlag_FlushOnLoad = 1 << 0,		// Clear handlers on game load
+		kEventFlag_IsUserDefined = 1 << 1,		// User-defined event
+		kEventFlag_AllowScriptDispatch = 1 << 2,	// Can be dispatched from scripts
+		kEventFlag_HasUnknownArgTypes = 1 << 3,	// Dynamic parameter types
+	};
+
 	// Event ID enumeration - ScriptEventList events must come first in mask order
 	enum EventID
 	{
@@ -66,6 +76,12 @@ namespace EventManager
 		kEventID_LoadGame = kEventID_InputEventMAX,
 		kEventID_SaveGame,
 		kEventID_ExitGame,
+		kEventID_ExitToMainMenu,
+		kEventID_PostLoadGame,
+		kEventID_DeleteGame,
+		kEventID_RenameGame,
+		kEventID_NewGame,
+		kEventID_PreLoadGame,
 		
 		// User-defined events
 		kEventID_UserDefined,
@@ -78,6 +94,7 @@ namespace EventManager
 	struct EventInfo
 	{
 		std::string			evName;			// Event name
+		std::string			alias;			// Event alias (optional, for backward compatibility)
 		EventID				evID;			// Unique event ID
 		ParamType*			paramTypes;		// Array of parameter types
 		UInt8				numParams;		// Number of parameters
@@ -92,6 +109,8 @@ namespace EventManager
 		EventHandlerCallback	m_func;			// Handler function
 		void*					m_context;		// Optional context pointer
 		UInt32					m_priority;		// Handler priority (higher = first)
+		std::string				m_pluginName;	// Plugin that registered this handler
+		std::string				m_handlerName;	// Name of this handler (for debugging)
 		
 		NativeEventHandlerInfo() : m_func(nullptr), m_context(nullptr), m_priority(0) {}
 		NativeEventHandlerInfo(EventHandlerCallback func, void* context = nullptr, UInt32 priority = 0)
@@ -135,13 +154,16 @@ namespace EventManager
 	// Shutdown the event manager
 	void Shutdown();
 	
+	// Clear handlers for events marked with FlushOnLoad flag
+	void ClearFlushOnLoadEventHandlers();
+	
 	// Register a new event type
 	// Returns true if registration succeeded
-	bool RegisterEvent(const char* eventName, EventID evID, ParamType* paramTypes, UInt8 numParams);
+	bool RegisterEvent(const char* eventName, EventID evID, ParamType* paramTypes, UInt8 numParams, const char* alias = nullptr, EventFlags flags = kEventFlag_None);
 	
 	// Register a native event handler
 	// Returns true if handler was registered successfully
-	bool RegisterEventHandler(const char* eventName, EventHandlerCallback callback, void* context = nullptr, UInt32 priority = 0);
+	bool RegisterEventHandler(const char* eventName, EventHandlerCallback callback, void* context = nullptr, UInt32 priority = 0, const char* pluginName = nullptr, const char* handlerName = nullptr);
 	
 	// Remove a native event handler
 	// Returns true if handler was found and removed
@@ -161,6 +183,12 @@ namespace EventManager
 	
 	// Check if an event is registered
 	bool IsEventRegistered(const char* eventName);
+	
+	// Get event alias (returns empty string if no alias)
+	const char* GetEventAlias(const char* eventName);
+	
+	// Get current event name (for debugging nested event handling)
+	const char* GetCurrentEventName();
 	
 	// Install hooks for game events (called during initialization)
 	void InstallGameHooks();

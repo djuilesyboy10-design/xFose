@@ -1,0 +1,125 @@
+xFose - Fallout Script Extender Enhanced Data Interface
+=====================================================
+
+xFose is an enhanced version of FOSE (Fallout Script Extender) that provides additional
+DataInterface functions for plugin developers, enabling more powerful array and string
+manipulation, as well as access to form extra data.
+
+NEW FEATURES
+============
+
+DataInterface Enhancements
+--------------------------
+Additional singleton and data IDs are now available through the DataInterface:
+
+Singleton IDs (GetSingleton):
+- kFOSEData_ArrayMap (1) - Access to ArrayVarManager singleton
+- kFOSEData_StringMap (2) - Access to StringVarManager singleton
+
+Data IDs (GetData):
+- kFOSEData_NumPreloadMods (1) - Number of preload mods
+- kFOSEData_NumLoadedPlugins (2) - Number of loaded plugins
+- kFOSEData_FOSEVersion (3) - FOSE version number (0x01030032 for FOSE 1.3.2)
+
+ArrayVarManager Medium Enhancements
+------------------------------------
+New functions for array manipulation:
+
+Sort (kFOSEData_ArrayVarSort = 18)
+- Sorts array elements in ascending order
+- Elements are sorted first by type (Integer, Float, String), then by value
+- Returns true on success, false if array ID is invalid
+
+Reverse (kFOSEData_ArrayVarReverse = 19)
+- Reverses the order of all elements in the array
+- Returns true on success, false if array ID is invalid
+
+Shuffle (kFOSEData_ArrayVarShuffle = 20)
+- Randomly shuffles all elements in the array
+- Uses std::random_shuffle for randomization
+- Returns true on success, false if array ID is invalid
+
+StringVarManager Medium Enhancements
+------------------------------------
+New functions for string manipulation:
+
+Uppercase (kFOSEData_StringVarUppercase = 21)
+- Converts all characters in the string to uppercase
+- Modifies the string in-place
+- No return value
+
+Lowercase (kFOSEData_StringVarLowercase = 22)
+- Converts all characters in the string to lowercase
+- Modifies the string in-place
+- No return value
+
+Trim (kFOSEData_StringVarTrim = 23)
+- Removes leading and trailing whitespace from the string
+- Handles spaces, tabs, newlines, and carriage returns
+- Modifies the string in-place
+- No return value
+
+Replace (kFOSEData_StringVarReplace = 24)
+- Replaces all occurrences of a search substring with a replacement string
+- Returns the number of replacements made
+- Modifies the string in-place
+- Returns 0 if search or replace strings are null
+
+FormExtraData Implementation
+-----------------------------
+New FormExtraData manager for managing extra data attached to game forms:
+
+Count (kFOSEData_FormExtraDataCount = 6)
+- Returns the number of extra data entries attached to a form
+- Thread-safe access using critical section
+
+Exists (kFOSEData_FormExtraDataExists = 7)
+- Checks if extra data with a specific name exists on a form
+- Returns true if found, false otherwise
+- Thread-safe access using critical section
+
+Iterate (kFOSEData_FormExtraDataIterate = 8)
+- Iterates through all extra data entries on a form
+- Calls a callback function for each entry
+- Thread-safe access using critical section
+
+USAGE FOR MOD MAKERS
+====================
+
+All new functions are exposed through the FOSEDataInterface via the GetFunc function.
+Plugins can retrieve function pointers and call them directly.
+
+Example usage:
+
+```cpp
+// Get the DataInterface
+FOSEDataInterface* dataInterface = (FOSEDataInterface*)fose->QueryInterface(kInterface_DataInterface);
+
+// Get function pointer
+auto sortFunc = (bool(*)(ArrayVarManager*, UInt32))dataInterface->GetFunc(kFOSEData_ArrayVarSort);
+ArrayVarManager* arrayMgr = (ArrayVarManager*)dataInterface->GetSingleton(kFOSEData_ArrayMap);
+
+// Call the function
+sortFunc(arrayMgr, arrayID);
+```
+
+COMPATIBILITY
+=============
+- Requires FOSE 1.3.2 or compatible
+- Compatible with all existing FOSE plugins
+- No changes to existing FOSE API functions
+
+INSTALLATION
+============
+Standard FOSE installation. Place xFOSE files in your Fallout 3 directory
+as you would with regular FOSE.
+
+SUPPORT
+=======
+For issues, questions, or feature requests, please visit the Nexus Mods page
+or the GitHub repository.
+
+CREDITS
+=======
+- Based on original FOSE by the FOSE team
+- Enhanced with additional DataInterface functions for plugin developers

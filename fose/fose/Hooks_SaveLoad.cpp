@@ -1,6 +1,7 @@
 #include "fose_common/SafeWrite.h"
 #include "Hooks_SaveLoad.h"
 #include "Serialization.h"
+#include "EventManager.h"
 
 bool g_gameLoaded = false;
 static const char* LoadGameMessage = "---Finished loading game: %s";
@@ -95,7 +96,15 @@ static void __stdcall DoLoadGameHook(const char* saveFilePath)
 	g_gameLoaded = true;
 
 	_MESSAGE("DoLoadGameHook: %s", saveFilePath);
+	
+	// Dispatch OnPreLoadGame event
+	EventManager::DispatchEventByID(EventManager::kEventID_PreLoadGame, nullptr);
+	
 	Serialization::HandleLoadGame(saveFilePath);
+	
+	// Dispatch OnLoadGame and OnPostLoadGame events
+	EventManager::DispatchEventByID(EventManager::kEventID_LoadGame, nullptr);
+	EventManager::DispatchEventByID(EventManager::kEventID_PostLoadGame, nullptr);
 }
 
 static __declspec(naked) void LoadGameHook(void)
@@ -117,6 +126,9 @@ static void __stdcall DoSaveGameHook(const char* saveFilePath)
 {
 	_MESSAGE("DoSaveGameHook: %s", saveFilePath);
 	Serialization::HandleSaveGame(saveFilePath);
+	
+	// Dispatch OnSaveGame event
+	EventManager::DispatchEventByID(EventManager::kEventID_SaveGame, nullptr);
 }
 
 static __declspec(naked) void SaveGameHook(void)
@@ -137,6 +149,9 @@ static __declspec(naked) void SaveGameHook(void)
 static void NewGameHook(void)
 {
 	_MESSAGE("NewGameHook");
+	
+	// Dispatch OnNewGame event
+	EventManager::DispatchEventByID(EventManager::kEventID_NewGame, nullptr);
 
 	Serialization::HandleNewGame();
 }
@@ -144,6 +159,9 @@ static void NewGameHook(void)
 static void __stdcall DeleteGameHook(const char * path)
 {
 	_MESSAGE("DeleteGameHook: %s", path);
+
+	// Dispatch OnDeleteGame event
+	EventManager::DispatchEventByID(EventManager::kEventID_DeleteGame, nullptr);
 
 	Serialization::HandleDeleteGame(path);
 
@@ -153,6 +171,9 @@ static void __stdcall DeleteGameHook(const char * path)
 static void RenameGameHook(const char * oldPath, const char * newPath)
 {
 	_MESSAGE("RenameGameHook: %s -> %s", oldPath, newPath);
+
+	// Dispatch OnRenameGame event
+	EventManager::DispatchEventByID(EventManager::kEventID_RenameGame, nullptr);
 
 	Serialization::HandleRenameGame(oldPath, newPath);
 

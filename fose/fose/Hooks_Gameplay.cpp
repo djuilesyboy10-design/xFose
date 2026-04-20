@@ -70,9 +70,18 @@ void __stdcall SendQuitGameMessage(QuitGameMessage msg)
 {
 	UInt32 msgToSend = FOSEMessagingInterface::kMessage_ExitGame;
 	if (msg == kQuit_ToMainMenu)
+	{
 		msgToSend = FOSEMessagingInterface::kMessage_ExitToMainMenu;
+		// Dispatch OnExitToMainMenu event
+		EventManager::DispatchEventByID(EventManager::kEventID_ExitToMainMenu, nullptr);
+	}
 	else if (msg == kQuit_QQQ)
 		msgToSend = FOSEMessagingInterface::kMessage_ExitGame_Console;
+	else
+	{
+		// Dispatch OnExitGame event for kQuit_ToWindows
+		EventManager::DispatchEventByID(EventManager::kEventID_ExitGame, nullptr);
+	}
 
 	PluginManager::Dispatch_Message(0, msgToSend, NULL, 0, NULL);
 }

@@ -40,7 +40,9 @@ bool RegisterEventHandler(
     const char* eventName,          // Event name (e.g., "OnHit", "OnDeath")
     EventHandlerCallback callback,   // Your callback function
     void* context,                   // Optional context pointer passed to callback
-    UInt32 priority                 // Handler priority (higher = called first)
+    UInt32 priority,                // Handler priority (higher = called first)
+    const char* pluginName,         // Optional plugin name for debug logging (can be nullptr)
+    const char* handlerName         // Optional handler name for debug logging (can be nullptr)
 );
 ```
 
@@ -91,6 +93,63 @@ These events fire on specific game objects when scripted conditions are met:
 | OnKeyDown | Key pressed down | `params[0]`: keycode (UInt32) |
 | OnKeyUp | Key released | `params[0]`: keycode (UInt32) |
 | OnKeyPress | Key pressed and released | `params[0]`: keycode (UInt32) |
+
+### Internal Events
+
+| Event Name | Description | Parameters |
+|---|---|---|
+| OnLoadGame | Game loaded from save file | None |
+| OnSaveGame | Game saved | None |
+| OnExitGame | Game is exiting to desktop | None |
+| OnExitToMainMenu | Game is exiting to main menu | None |
+| OnPostLoadGame | After game load completes | None |
+| OnNewGame | New game started | None |
+| OnDeleteGame | Save file deleted | None |
+| OnRenameGame | Save file renamed | None |
+| OnPreLoadGame | Before game load starts | None |
+
+## Phase 1 Features
+
+The Event Manager has been enhanced with the following features to bring it closer to xNVSE's level of functionality:
+
+### Event Aliases
+
+Events can now have aliases for backward compatibility or alternative naming:
+- Events can be registered with an alias using `RegisterEvent(eventName, evID, params, numParams, alias)`
+- Both the event name and alias can be used to register handlers
+- Use `GetEventAlias(eventName)` to retrieve an event's alias
+
+### Event Flags System
+
+Events can have flags that control their behavior:
+
+| Flag | Description |
+|---|---|
+| kEventFlag_FlushOnLoad | Handlers are cleared when the game loads |
+| kEventFlag_IsUserDefined | Event was defined by a plugin (not built-in) |
+| kEventFlag_AllowScriptDispatch | Event can be dispatched from scripts |
+| kEventFlag_HasUnknownArgTypes | Event has dynamic parameter types |
+
+Use `ClearFlushOnLoadEventHandlers()` to clear all handlers for events marked with `FlushOnLoad`.
+
+### Better Debug Info
+
+Event handlers now support optional plugin and handler names for better debugging:
+- Pass `pluginName` and `handlerName` when registering handlers
+- These names are logged when events are dispatched
+- Helps identify which plugin/handler is being called during debugging
+
+Example:
+```cpp
+g_eventManager->RegisterEventHandler("OnLoadGame", MyHandler, nullptr, 0, "MyPlugin", "MyLoadHandler");
+```
+
+### Event Stack Tracking
+
+The Event Manager now tracks event nesting for debugging:
+- `GetCurrentEventName()` returns the name of the currently dispatching event
+- Useful for debugging nested event handling
+- Empty string if no event is currently being dispatched
 
 ## Example Plugin
 
