@@ -1,5 +1,6 @@
 #include "CommandTable.h"
 #include "GameRTTI.h"
+#include "Commands_ActorState.h"
 #include "Commands_Console.h"
 #include "Commands_Faction.h"
 #include "Commands_Game.h"
@@ -1898,6 +1899,9 @@ void CommandTable::Init(void)
 	ADD_CMD(SetFactionReaction);
 	ADD_CMD(AddFaction);
 	ADD_CMD(RemoveFaction);
+	ADD_CMD(IsUnconscious);
+	ADD_CMD(IsAlive);
+	ADD_CMD(GetGameDaysPassed);
 	/*
 	ImportConsoleCommand("SetFog");
 	ImportConsoleCommand("SetClipDist");

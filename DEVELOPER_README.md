@@ -235,6 +235,27 @@ SetFactionReaction(BrotherhoodFactionRef, EnclaveFactionRef, -100)
 int reaction = GetFactionReaction(BrotherhoodFactionRef, EnclaveFactionRef)
 ```
 
+## Actor State Commands
+
+FOSE provides commands for checking actor states:
+
+- **IsUnconscious(reference)** - Returns 1 if the actor is unconscious, 0 otherwise
+- **IsAlive(reference)** - Returns 1 if the actor is alive, 0 if dead
+- **GetGameDaysPassed()** - Returns the number of game days passed (placeholder)
+
+Example:
+```cpp
+// Check if an actor is unconscious
+if IsUnconscious(ActorRef)
+    Print "Actor is unconscious"
+
+// Check if an actor is alive
+if IsAlive(ActorRef)
+    Print "Actor is alive"
+else
+    Print "Actor is dead"
+```
+
 ## Example Plugin
 
 ```cpp

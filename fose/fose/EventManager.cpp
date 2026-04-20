@@ -519,10 +519,8 @@ namespace EventManager
 			
 			if (handler.nativeHandler.m_func)
 			{
-				// Log handler invocation with debug info
-				const char* pluginName = handler.nativeHandler.m_pluginName.empty() ? "[Unknown]" : handler.nativeHandler.m_pluginName.c_str();
-				const char* handlerName = handler.nativeHandler.m_handlerName.empty() ? "[Unnamed]" : handler.nativeHandler.m_handlerName.c_str();
-				_MESSAGE("DispatchEvent: Calling handler '%s::%s' for event '%s'", pluginName, handlerName, eventName);
+				// Logging disabled to prevent garbage symbols in output
+				// _MESSAGE("DispatchEvent: Calling handler for event '%s'", eventName);
 				
 				handler.nativeHandler.m_func(params, handler.nativeHandler.m_context);
 			}
