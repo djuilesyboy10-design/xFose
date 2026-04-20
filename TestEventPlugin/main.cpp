@@ -166,6 +166,98 @@ extern "C" __declspec(dllexport) bool FOSEPlugin_Load(const FOSEInterface* fose)
 
         void* stringVarReplace = GetFuncFunc(24); // kFOSEData_StringVarReplace = 24
         Log("DataInterface GetFunc(StringVarReplace) returned: %08X", stringVarReplace);
+
+        // Test GetFunc for new Map/StringMap functions
+        void* arrayVarCreateMap = GetFuncFunc(25); // kFOSEData_ArrayVarCreateMap = 25
+        Log("DataInterface GetFunc(ArrayVarCreateMap) returned: %08X", arrayVarCreateMap);
+
+        void* arrayVarCreateStringMap = GetFuncFunc(26); // kFOSEData_ArrayVarCreateStringMap = 26
+        Log("DataInterface GetFunc(ArrayVarCreateStringMap) returned: %08X", arrayVarCreateStringMap);
+
+        void* arrayVarGetContainerType = GetFuncFunc(27); // kFOSEData_ArrayVarGetContainerType = 27
+        Log("DataInterface GetFunc(ArrayVarGetContainerType) returned: %08X", arrayVarGetContainerType);
+
+        void* arrayVarHasKey = GetFuncFunc(28); // kFOSEData_ArrayVarHasKey = 28
+        Log("DataInterface GetFunc(ArrayVarHasKey) returned: %08X", arrayVarHasKey);
+
+        void* arrayVarSetElementByKey = GetFuncFunc(29); // kFOSEData_ArrayVarSetElementByKey = 29
+        Log("DataInterface GetFunc(ArrayVarSetElementByKey) returned: %08X", arrayVarSetElementByKey);
+
+        void* arrayVarGetElementByKey = GetFuncFunc(30); // kFOSEData_ArrayVarGetElementByKey = 30
+        Log("DataInterface GetFunc(ArrayVarGetElementByKey) returned: %08X", arrayVarGetElementByKey);
+
+        void* arrayVarRemoveByKey = GetFuncFunc(31); // kFOSEData_ArrayVarRemoveByKey = 31
+        Log("DataInterface GetFunc(ArrayVarRemoveByKey) returned: %08X", arrayVarRemoveByKey);
+
+        // Test GetSingleton for LoggingManager
+        void* loggingManager = GetSingletonFunc(3); // kFOSEData_LoggingManager = 3
+        Log("DataInterface GetSingleton(LoggingManager) returned: %08X", loggingManager);
+
+        // Test GetFunc for Logging functions
+        void* loggingLog = GetFuncFunc(32); // kFOSEData_LoggingLog = 32
+        Log("DataInterface GetFunc(LoggingLog) returned: %08X", loggingLog);
+
+        void* loggingLogInfo = GetFuncFunc(33); // kFOSEData_LoggingLogInfo = 33
+        Log("DataInterface GetFunc(LoggingLogInfo) returned: %08X", loggingLogInfo);
+
+        void* loggingLogWarning = GetFuncFunc(34); // kFOSEData_LoggingLogWarning = 34
+        Log("DataInterface GetFunc(LoggingLogWarning) returned: %08X", loggingLogWarning);
+
+        void* loggingLogError = GetFuncFunc(35); // kFOSEData_LoggingLogError = 35
+        Log("DataInterface GetFunc(LoggingLogError) returned: %08X", loggingLogError);
+
+        // Test logging functions
+        if (loggingManager && loggingLogInfo)
+        {
+            void (*LogInfoFunc)(void*, const char*) = (void (*)(void*, const char*))loggingLogInfo;
+            LogInfoFunc(loggingManager, "TestEventPlugin: Logging test - Info message");
+        }
+        if (loggingManager && loggingLogWarning)
+        {
+            void (*LogWarningFunc)(void*, const char*) = (void (*)(void*, const char*))loggingLogWarning;
+            LogWarningFunc(loggingManager, "TestEventPlugin: Logging test - Warning message");
+        }
+        if (loggingManager && loggingLogError)
+        {
+            void (*LogErrorFunc)(void*, const char*) = (void (*)(void*, const char*))loggingLogError;
+            LogErrorFunc(loggingManager, "TestEventPlugin: Logging test - Error message");
+        }
+
+        // Test GetSingleton for PlayerControlsManager
+        void* playerControlsManager = GetSingletonFunc(4); // kFOSEData_PlayerControlsManager = 4
+        Log("DataInterface GetSingleton(PlayerControlsManager) returned: %08X", playerControlsManager);
+
+        // Test GetFunc for PlayerControls functions
+        void* pcIsKeyPressed = GetFuncFunc(36); // kFOSEData_PlayerControlsIsKeyPressed = 36
+        Log("DataInterface GetFunc(PlayerControlsIsKeyPressed) returned: %08X", pcIsKeyPressed);
+
+        void* pcTapKey = GetFuncFunc(37); // kFOSEData_PlayerControlsTapKey = 37
+        Log("DataInterface GetFunc(PlayerControlsTapKey) returned: %08X", pcTapKey);
+
+        void* pcHoldKey = GetFuncFunc(38); // kFOSEData_PlayerControlsHoldKey = 38
+        Log("DataInterface GetFunc(PlayerControlsHoldKey) returned: %08X", pcHoldKey);
+
+        void* pcReleaseKey = GetFuncFunc(39); // kFOSEData_PlayerControlsReleaseKey = 39
+        Log("DataInterface GetFunc(PlayerControlsReleaseKey) returned: %08X", pcReleaseKey);
+
+        void* pcIsControlPressed = GetFuncFunc(45); // kFOSEData_PlayerControlsIsControlPressed = 45
+        Log("DataInterface GetFunc(PlayerControlsIsControlPressed) returned: %08X", pcIsControlPressed);
+
+        // Test PlayerControls functions
+        if (playerControlsManager && pcIsKeyPressed)
+        {
+            void (*IsKeyPressedFunc)(void*, UInt32, bool*) = (void (*)(void*, UInt32, bool*))pcIsKeyPressed;
+            bool pressed = false;
+            IsKeyPressedFunc(playerControlsManager, 0x57, &pressed); // Check if 'W' key is pressed
+            Log("PlayerControls: IsKeyPressed('W') = %d", pressed);
+        }
+        if (playerControlsManager && pcIsControlPressed)
+        {
+            void (*IsControlPressedFunc)(void*, UInt32, bool*) = (void (*)(void*, UInt32, bool*))pcIsControlPressed;
+            bool pressed = false;
+            IsControlPressedFunc(playerControlsManager, 0, &pressed); // Check if forward control is pressed
+            Log("PlayerControls: IsControlPressed(Forward) = %d", pressed);
+        }
     }
 
     bool r1 = g_eventManager->RegisterEventHandler("OnHit", OnHitHandler, nullptr, 0);

@@ -16,6 +16,14 @@ enum ArrayElementType
 	kArrayElement_String,
 };
 
+// Container types
+enum ArrayContainerType
+{
+	kArrayContainer_Array = 0,		// Standard array with integer indices
+	kArrayContainer_Map,			// Map with numeric keys
+	kArrayContainer_StringMap,		// Map with string keys
+};
+
 // Array element data
 struct ArrayElement
 {
@@ -34,15 +42,40 @@ struct ArrayElement
 	ArrayElement(UInt32 strID, UInt32 len) : type(kArrayElement_String), stringID(strID), stringLen(len) {}
 };
 
+// Array key for Map/StringMap containers
+struct ArrayKey
+{
+	enum KeyType
+	{
+		kKey_None = 0,
+		kKey_Numeric,
+		kKey_String,
+	};
+
+	KeyType	type;
+	union
+	{
+		double	numericKey;
+		UInt32	stringKeyID;	// Reference to string variable
+	};
+
+	ArrayKey() : type(kKey_None), numericKey(0) {}
+	ArrayKey(double key) : type(kKey_Numeric), numericKey(key) {}
+	ArrayKey(UInt32 strKeyID) : type(kKey_String), stringKeyID(strKeyID) {}
+};
+
 // Array variable data structure
 struct ArrayVarData
 {
 	UInt32						id;				// Unique ID for the array
-	std::vector<ArrayElement>	elements;		// Array elements
+	ArrayContainerType			containerType;	// Container type (Array, Map, StringMap)
+	std::vector<ArrayElement>	elements;		// Array elements (for Array container)
+	std::unordered_map<double, ArrayElement>	numMap;		// Numeric key map
+	std::unordered_map<std::string, ArrayElement>	strMap;		// String key map
 	void*						owningScript;	// Script that owns this array (for cleanup)
 
 	ArrayVarData(UInt32 _id, void* _owningScript)
-		: id(_id), owningScript(_owningScript)
+		: id(_id), containerType(kArrayContainer_Array), owningScript(_owningScript)
 	{
 	}
 };
@@ -107,6 +140,27 @@ public:
 	// Shuffle array elements randomly
 	bool	Shuffle(UInt32 arrayID);
 
+	// Create a map with numeric keys
+	UInt32	CreateMap(void* owningScript);
+
+	// Create a string map with string keys
+	UInt32	CreateStringMap(void* owningScript);
+
+	// Get container type
+	ArrayContainerType	GetContainerType(UInt32 arrayID);
+
+	// Check if array has a specific key (for Map/StringMap)
+	bool	HasKey(UInt32 arrayID, const ArrayKey& key);
+
+	// Set element by key (for Map/StringMap)
+	bool	SetElementByKey(UInt32 arrayID, const ArrayKey& key, const ArrayElement& element);
+
+	// Get element by key (for Map/StringMap)
+	bool	GetElementByKey(UInt32 arrayID, const ArrayKey& key, ArrayElement& outElement);
+
+	// Remove element by key (for Map/StringMap)
+	bool	RemoveByKey(UInt32 arrayID, const ArrayKey& key);
+
 	// Static wrappers for DataInterface
 	static bool InsertAtBySelf(ArrayVarManager* self, UInt32 arrayID, UInt32 index, const ArrayElement& element);
 	static SInt32 FindByValueBySelf(ArrayVarManager* self, UInt32 arrayID, const ArrayElement& element);
@@ -114,6 +168,13 @@ public:
 	static bool SortBySelf(ArrayVarManager* self, UInt32 arrayID);
 	static bool ReverseBySelf(ArrayVarManager* self, UInt32 arrayID);
 	static bool ShuffleBySelf(ArrayVarManager* self, UInt32 arrayID);
+	static UInt32 CreateMapBySelf(ArrayVarManager* self, void* owningScript);
+	static UInt32 CreateStringMapBySelf(ArrayVarManager* self, void* owningScript);
+	static ArrayContainerType GetContainerTypeBySelf(ArrayVarManager* self, UInt32 arrayID);
+	static bool HasKeyBySelf(ArrayVarManager* self, UInt32 arrayID, const ArrayKey& key);
+	static bool SetElementByKeyBySelf(ArrayVarManager* self, UInt32 arrayID, const ArrayKey& key, const ArrayElement& element);
+	static bool GetElementByKeyBySelf(ArrayVarManager* self, UInt32 arrayID, const ArrayKey& key, ArrayElement& outElement);
+	static bool RemoveByKeyBySelf(ArrayVarManager* self, UInt32 arrayID, const ArrayKey& key);
 
 private:
 	ArrayVarManager();

@@ -8,6 +8,10 @@ xFOSE is an updated, modernized continuation of the Fallout 3 Script Extender (F
 - **Event Handlers** - Plugins can register handlers for game events: OnHit, OnDeath, OnLoad, OnEquip, OnActivate, and more
 - **String Variables** - New script commands for string manipulation: create, set, get, concatenate, compare, and check validity with full save/load support
 - **Arrays** - New script commands for array operations: create, set, get, push, pop, remove, clear, and size with full save/load support
+- **Map and StringMap Containers** - New associative container types for key-value storage with full DataInterface support
+- **Logging Interface** - New LoggingManager singleton for file-based logging with log levels (Info, Warning, Error) accessible via DataInterface
+- **PlayerControls Interface** - New PlayerControlsManager singleton for input/control state checking and manipulation via DataInterface
+- **DataInterface System** - Unified interface for accessing FOSE singletons and utility functions from plugins
 - **Codebase Modernization** - C++14 support, STL-style containers, modern string handling, RAII hook management, and plugin API helpers
 - **100% Backward Compatible** - Drop-in replacement for FOSE. All existing plugins and mods continue to work without modification
 - **Open Source** - Free to use, modify, and upgrade by anyone
@@ -17,6 +21,7 @@ xFOSE is an updated, modernized continuation of the Fallout 3 Script Extender (F
 - **[MODERNIZATION.md](MODERNIZATION.md)** - Full modernization guide covering all C++14 upgrades, container improvements, and new helper APIs
 - **[DEVELOPER_README.md](DEVELOPER_README.md)** - Developer guide for using the Event Manager API in your plugins
 - **[EVENT_MANAGER_API.md](EVENT_MANAGER_API.md)** - Detailed Event Manager API reference
+- **[DATAINTERFACE_API.md](DATAINTERFACE_API.md)** - DataInterface API for accessing FOSE singletons and utility functions
 - **[STRING_VARIABLES.md](STRING_VARIABLES.md)** - String variable commands and usage guide for modders
 - **[ARRAYS.md](ARRAYS.md)** - Array commands and usage guide for modders
 

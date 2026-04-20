@@ -45,7 +45,18 @@ UInt32 ArrayVarManager::GetSize(UInt32 arrayID)
 	auto it = m_arrayMap.find(arrayID);
 	if (it != m_arrayMap.end())
 	{
-		return it->second->elements.size();
+		ArrayVarData* data = it->second;
+		switch (data->containerType)
+		{
+		case kArrayContainer_Array:
+			return data->elements.size();
+		case kArrayContainer_Map:
+			return data->numMap.size();
+		case kArrayContainer_StringMap:
+			return data->strMap.size();
+		default:
+			return 0;
+		}
 	}
 	
 	_MESSAGE("ArrayVar: GetSize failed - ID %d not found", arrayID);
@@ -161,8 +172,21 @@ bool ArrayVarManager::Clear(UInt32 arrayID)
 	auto it = m_arrayMap.find(arrayID);
 	if (it != m_arrayMap.end())
 	{
-		it->second->elements.clear();
-		return true;
+		ArrayVarData* data = it->second;
+		switch (data->containerType)
+		{
+		case kArrayContainer_Array:
+			data->elements.clear();
+			return true;
+		case kArrayContainer_Map:
+			data->numMap.clear();
+			return true;
+		case kArrayContainer_StringMap:
+			data->strMap.clear();
+			return true;
+		default:
+			return false;
+		}
 	}
 	else
 	{
@@ -397,6 +421,212 @@ bool ArrayVarManager::ShuffleBySelf(ArrayVarManager* self, UInt32 arrayID)
 	return false;
 }
 
+UInt32 ArrayVarManager::CreateMap(void* owningScript)
+{
+	UInt32 id = m_nextID++;
+	ArrayVarData* data = new ArrayVarData(id, owningScript);
+	data->containerType = kArrayContainer_Map;
+	m_arrayMap[id] = data;
+	return id;
+}
+
+UInt32 ArrayVarManager::CreateStringMap(void* owningScript)
+{
+	UInt32 id = m_nextID++;
+	ArrayVarData* data = new ArrayVarData(id, owningScript);
+	data->containerType = kArrayContainer_StringMap;
+	m_arrayMap[id] = data;
+	return id;
+}
+
+ArrayContainerType ArrayVarManager::GetContainerType(UInt32 arrayID)
+{
+	auto it = m_arrayMap.find(arrayID);
+	if (it == m_arrayMap.end())
+	{
+		_MESSAGE("ArrayVar: GetContainerType failed - ID %d not found", arrayID);
+		return kArrayContainer_Array;
+	}
+
+	return it->second->containerType;
+}
+
+bool ArrayVarManager::HasKey(UInt32 arrayID, const ArrayKey& key)
+{
+	auto it = m_arrayMap.find(arrayID);
+	if (it == m_arrayMap.end())
+	{
+		_MESSAGE("ArrayVar: HasKey failed - ID %d not found", arrayID);
+		return false;
+	}
+
+	ArrayVarData* data = it->second;
+
+	switch (data->containerType)
+	{
+	case kArrayContainer_Map:
+		if (key.type != ArrayKey::kKey_Numeric)
+			return false;
+		return data->numMap.find(key.numericKey) != data->numMap.end();
+	case kArrayContainer_StringMap:
+		if (key.type != ArrayKey::kKey_String)
+			return false;
+		// For string keys, we'd need to resolve the stringID to the actual string
+		// For now, return false as string resolution is not implemented
+		return false;
+	default:
+		return false;
+	}
+}
+
+bool ArrayVarManager::SetElementByKey(UInt32 arrayID, const ArrayKey& key, const ArrayElement& element)
+{
+	auto it = m_arrayMap.find(arrayID);
+	if (it == m_arrayMap.end())
+	{
+		_MESSAGE("ArrayVar: SetElementByKey failed - ID %d not found", arrayID);
+		return false;
+	}
+
+	ArrayVarData* data = it->second;
+
+	switch (data->containerType)
+	{
+	case kArrayContainer_Map:
+		if (key.type != ArrayKey::kKey_Numeric)
+			return false;
+		data->numMap[key.numericKey] = element;
+		return true;
+	case kArrayContainer_StringMap:
+		if (key.type != ArrayKey::kKey_String)
+			return false;
+		// For string keys, we'd need to resolve the stringID to the actual string
+		// For now, return false as string resolution is not implemented
+		return false;
+	default:
+		_MESSAGE("ArrayVar: SetElementByKey failed - invalid container type");
+		return false;
+	}
+}
+
+bool ArrayVarManager::GetElementByKey(UInt32 arrayID, const ArrayKey& key, ArrayElement& outElement)
+{
+	auto it = m_arrayMap.find(arrayID);
+	if (it == m_arrayMap.end())
+	{
+		_MESSAGE("ArrayVar: GetElementByKey failed - ID %d not found", arrayID);
+		return false;
+	}
+
+	ArrayVarData* data = it->second;
+
+	switch (data->containerType)
+	{
+	case kArrayContainer_Map:
+		if (key.type != ArrayKey::kKey_Numeric)
+			return false;
+		{
+			auto mapIt = data->numMap.find(key.numericKey);
+			if (mapIt != data->numMap.end())
+			{
+				outElement = mapIt->second;
+				return true;
+			}
+		}
+		return false;
+	case kArrayContainer_StringMap:
+		if (key.type != ArrayKey::kKey_String)
+			return false;
+		// For string keys, we'd need to resolve the stringID to the actual string
+		// For now, return false as string resolution is not implemented
+		return false;
+	default:
+		_MESSAGE("ArrayVar: GetElementByKey failed - invalid container type");
+		return false;
+	}
+}
+
+bool ArrayVarManager::RemoveByKey(UInt32 arrayID, const ArrayKey& key)
+{
+	auto it = m_arrayMap.find(arrayID);
+	if (it == m_arrayMap.end())
+	{
+		_MESSAGE("ArrayVar: RemoveByKey failed - ID %d not found", arrayID);
+		return false;
+	}
+
+	ArrayVarData* data = it->second;
+
+	switch (data->containerType)
+	{
+	case kArrayContainer_Map:
+		if (key.type != ArrayKey::kKey_Numeric)
+			return false;
+		{
+			size_t erased = data->numMap.erase(key.numericKey);
+			return erased > 0;
+		}
+	case kArrayContainer_StringMap:
+		if (key.type != ArrayKey::kKey_String)
+			return false;
+		// For string keys, we'd need to resolve the stringID to the actual string
+		// For now, return false as string resolution is not implemented
+		return false;
+	default:
+		_MESSAGE("ArrayVar: RemoveByKey failed - invalid container type");
+		return false;
+	}
+}
+
+UInt32 ArrayVarManager::CreateMapBySelf(ArrayVarManager* self, void* owningScript)
+{
+	if (self)
+		return self->CreateMap(owningScript);
+	return 0;
+}
+
+UInt32 ArrayVarManager::CreateStringMapBySelf(ArrayVarManager* self, void* owningScript)
+{
+	if (self)
+		return self->CreateStringMap(owningScript);
+	return 0;
+}
+
+ArrayContainerType ArrayVarManager::GetContainerTypeBySelf(ArrayVarManager* self, UInt32 arrayID)
+{
+	if (self)
+		return self->GetContainerType(arrayID);
+	return kArrayContainer_Array;
+}
+
+bool ArrayVarManager::HasKeyBySelf(ArrayVarManager* self, UInt32 arrayID, const ArrayKey& key)
+{
+	if (self)
+		return self->HasKey(arrayID, key);
+	return false;
+}
+
+bool ArrayVarManager::SetElementByKeyBySelf(ArrayVarManager* self, UInt32 arrayID, const ArrayKey& key, const ArrayElement& element)
+{
+	if (self)
+		return self->SetElementByKey(arrayID, key, element);
+	return false;
+}
+
+bool ArrayVarManager::GetElementByKeyBySelf(ArrayVarManager* self, UInt32 arrayID, const ArrayKey& key, ArrayElement& outElement)
+{
+	if (self)
+		return self->GetElementByKey(arrayID, key, outElement);
+	return false;
+}
+
+bool ArrayVarManager::RemoveByKeyBySelf(ArrayVarManager* self, UInt32 arrayID, const ArrayKey& key)
+{
+	if (self)
+		return self->RemoveByKey(arrayID, key);
+	return false;
+}
+
 // Serialization Callbacks
 void ArrayVar_SaveCallback(void * reserved)
 {
@@ -423,20 +653,39 @@ void ArrayVar_SaveCallback(void * reserved)
 		UInt32 id = data->id;
 		fose->WriteRecordData(&id, sizeof(id));
 
-		// Write the number of elements
-		UInt32 numElements = data->elements.size();
+		// Write the container type
+		UInt32 containerType = data->containerType;
+		fose->WriteRecordData(&containerType, sizeof(containerType));
+
+		// Write the number of elements based on container type
+		UInt32 numElements = 0;
+		switch (data->containerType)
+		{
+		case kArrayContainer_Array:
+			numElements = data->elements.size();
+			break;
+		case kArrayContainer_Map:
+			numElements = data->numMap.size();
+			break;
+		case kArrayContainer_StringMap:
+			numElements = data->strMap.size();
+			break;
+		}
 		fose->WriteRecordData(&numElements, sizeof(numElements));
 
-		// Write each element
-		for (const auto& element : data->elements)
+		// Write each element based on container type
+		switch (data->containerType)
 		{
-			// Write the element type
-			UInt32 type = element.type;
-			fose->WriteRecordData(&type, sizeof(type));
-
-			// Write the element data based on type
-			switch (element.type)
+		case kArrayContainer_Array:
+			for (const auto& element : data->elements)
 			{
+				// Write the element type
+				UInt32 type = element.type;
+				fose->WriteRecordData(&type, sizeof(type));
+
+				// Write the element data based on type
+				switch (element.type)
+				{
 			case kArrayElement_Integer:
 				fose->WriteRecordData(&element.intValue, sizeof(element.intValue));
 				break;
@@ -450,6 +699,41 @@ void ArrayVar_SaveCallback(void * reserved)
 			default:
 				break;
 			}
+			}
+			break;
+		case kArrayContainer_Map:
+			for (const auto& pair : data->numMap)
+			{
+				// Write the key
+				double key = pair.first;
+				fose->WriteRecordData(&key, sizeof(key));
+
+				// Write the element
+				const ArrayElement& element = pair.second;
+				UInt32 type = element.type;
+				fose->WriteRecordData(&type, sizeof(type));
+
+				switch (element.type)
+				{
+				case kArrayElement_Integer:
+					fose->WriteRecordData(&element.intValue, sizeof(element.intValue));
+					break;
+				case kArrayElement_Float:
+					fose->WriteRecordData(&element.floatValue, sizeof(element.floatValue));
+					break;
+				case kArrayElement_String:
+					fose->WriteRecordData(&element.stringID, sizeof(element.stringID));
+					fose->WriteRecordData(&element.stringLen, sizeof(element.stringLen));
+					break;
+				default:
+					break;
+				}
+			}
+			break;
+		case kArrayContainer_StringMap:
+			// For string maps, we'd need to serialize the string keys
+			// For now, skip serialization of string maps as string resolution is not implemented
+			break;
 		}
 
 		// Write the owning script pointer
@@ -521,6 +805,16 @@ void ArrayVar_LoadCallback(void * reserved)
 		ArrayVarData* data = new ArrayVarData(id, nullptr);
 		manager.m_arrayMap[id] = data;
 
+		// Read the container type
+		UInt32 containerType = 0;
+		bytesRead = fose->ReadRecordData(&containerType, sizeof(containerType));
+		if (bytesRead != sizeof(containerType))
+		{
+			_MESSAGE("ArrayVar: Failed to read container type");
+			break;
+		}
+		data->containerType = (ArrayContainerType)containerType;
+
 		// Read the number of elements
 		UInt32 numElements = 0;
 		bytesRead = fose->ReadRecordData(&numElements, sizeof(numElements));
@@ -530,59 +824,130 @@ void ArrayVar_LoadCallback(void * reserved)
 			break;
 		}
 
-		// Read each element
-		for (UInt32 j = 0; j < numElements; j++)
+		// Read each element based on container type
+		switch (data->containerType)
 		{
-			ArrayElement element;
-
-			// Read the element type
-			UInt32 type = 0;
-			bytesRead = fose->ReadRecordData(&type, sizeof(type));
-			if (bytesRead != sizeof(type))
+		case kArrayContainer_Array:
+			for (UInt32 j = 0; j < numElements; j++)
 			{
-				_MESSAGE("ArrayVar: Failed to read element type");
-				break;
-			}
-			element.type = (ArrayElementType)type;
+				ArrayElement element;
 
-			// Read the element data based on type
-			switch (element.type)
+				// Read the element type
+				UInt32 type = 0;
+				bytesRead = fose->ReadRecordData(&type, sizeof(type));
+				if (bytesRead != sizeof(type))
+				{
+					_MESSAGE("ArrayVar: Failed to read element type");
+					break;
+				}
+				element.type = (ArrayElementType)type;
+
+				// Read the element data based on type
+				switch (element.type)
+				{
+				case kArrayElement_Integer:
+					bytesRead = fose->ReadRecordData(&element.intValue, sizeof(element.intValue));
+					if (bytesRead != sizeof(element.intValue))
+					{
+						_MESSAGE("ArrayVar: Failed to read integer element");
+						break;
+					}
+					break;
+				case kArrayElement_Float:
+					bytesRead = fose->ReadRecordData(&element.floatValue, sizeof(element.floatValue));
+					if (bytesRead != sizeof(element.floatValue))
+					{
+						_MESSAGE("ArrayVar: Failed to read float element");
+						break;
+					}
+					break;
+				case kArrayElement_String:
+					bytesRead = fose->ReadRecordData(&element.stringID, sizeof(element.stringID));
+					if (bytesRead != sizeof(element.stringID))
+					{
+						_MESSAGE("ArrayVar: Failed to read string ID");
+						break;
+					}
+					bytesRead = fose->ReadRecordData(&element.stringLen, sizeof(element.stringLen));
+					if (bytesRead != sizeof(element.stringLen))
+					{
+						_MESSAGE("ArrayVar: Failed to read string length");
+						break;
+					}
+					break;
+				default:
+					break;
+				}
+
+				data->elements.push_back(element);
+			}
+			break;
+		case kArrayContainer_Map:
+			for (UInt32 j = 0; j < numElements; j++)
 			{
-			case kArrayElement_Integer:
-				bytesRead = fose->ReadRecordData(&element.intValue, sizeof(element.intValue));
-				if (bytesRead != sizeof(element.intValue))
+				// Read the key
+				double key = 0;
+				bytesRead = fose->ReadRecordData(&key, sizeof(key));
+				if (bytesRead != sizeof(key))
 				{
-					_MESSAGE("ArrayVar: Failed to read integer element");
+					_MESSAGE("ArrayVar: Failed to read map key");
 					break;
 				}
-				break;
-			case kArrayElement_Float:
-				bytesRead = fose->ReadRecordData(&element.floatValue, sizeof(element.floatValue));
-				if (bytesRead != sizeof(element.floatValue))
-				{
-					_MESSAGE("ArrayVar: Failed to read float element");
-					break;
-				}
-				break;
-			case kArrayElement_String:
-				bytesRead = fose->ReadRecordData(&element.stringID, sizeof(element.stringID));
-				if (bytesRead != sizeof(element.stringID))
-				{
-					_MESSAGE("ArrayVar: Failed to read string ID element");
-					break;
-				}
-				bytesRead = fose->ReadRecordData(&element.stringLen, sizeof(element.stringLen));
-				if (bytesRead != sizeof(element.stringLen))
-				{
-					_MESSAGE("ArrayVar: Failed to read string length element");
-					break;
-				}
-				break;
-			default:
-				break;
-			}
 
-			data->elements.push_back(element);
+				// Read the element
+				ArrayElement element;
+				UInt32 type = 0;
+				bytesRead = fose->ReadRecordData(&type, sizeof(type));
+				if (bytesRead != sizeof(type))
+				{
+					_MESSAGE("ArrayVar: Failed to read element type");
+					break;
+				}
+				element.type = (ArrayElementType)type;
+
+				switch (element.type)
+				{
+				case kArrayElement_Integer:
+					bytesRead = fose->ReadRecordData(&element.intValue, sizeof(element.intValue));
+					if (bytesRead != sizeof(element.intValue))
+					{
+						_MESSAGE("ArrayVar: Failed to read integer element");
+						break;
+					}
+					break;
+				case kArrayElement_Float:
+					bytesRead = fose->ReadRecordData(&element.floatValue, sizeof(element.floatValue));
+					if (bytesRead != sizeof(element.floatValue))
+					{
+						_MESSAGE("ArrayVar: Failed to read float element");
+						break;
+					}
+					break;
+				case kArrayElement_String:
+					bytesRead = fose->ReadRecordData(&element.stringID, sizeof(element.stringID));
+					if (bytesRead != sizeof(element.stringID))
+					{
+						_MESSAGE("ArrayVar: Failed to read string ID");
+						break;
+					}
+					bytesRead = fose->ReadRecordData(&element.stringLen, sizeof(element.stringLen));
+					if (bytesRead != sizeof(element.stringLen))
+					{
+						_MESSAGE("ArrayVar: Failed to read string length");
+						break;
+					}
+					break;
+				default:
+					break;
+				}
+
+				data->numMap[key] = element;
+			}
+			break;
+		case kArrayContainer_StringMap:
+			// For string maps, we'd need to deserialize the string keys
+			// For now, skip deserialization of string maps as string resolution is not implemented
+			break;
 		}
 
 		// Read the owning script pointer
