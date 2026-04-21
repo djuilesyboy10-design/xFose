@@ -11,6 +11,9 @@ static UInt32 g_pluginVersion = 1;
 // Event Manager interface pointer
 static FOSEEventManagerInterface* g_eventManager = nullptr;
 
+// Script interface pointer (void* because FOSEScriptInterface is RUNTIME-only)
+static void* g_scriptInterface = nullptr;
+
 // Data interface pointer
 static void* g_dataInterface = nullptr;
 
@@ -336,6 +339,19 @@ extern "C" __declspec(dllexport) bool FOSEPlugin_Load(const FOSEInterface* fose)
         }
     }
 
+    g_scriptInterface = fose->QueryInterface(kInterface_Script);
+    if (!g_scriptInterface)
+    {
+        Log("WARNING: QueryInterface for ScriptInterface returned NULL (may not be available)");
+    }
+    else
+    {
+        Log("ScriptInterface interface obtained");
+        // Cast to access version field (first field in struct)
+        UInt32 version = *((UInt32*)g_scriptInterface);
+        Log("ScriptInterface version=%d", version);
+    }
+
     bool r1 = g_eventManager->RegisterEventHandler("OnHit", OnHitHandler, nullptr, 0, nullptr, nullptr);
     bool r2 = g_eventManager->RegisterEventHandler("OnDeath", OnDeathHandler, nullptr, 0, nullptr, nullptr);
     bool r3 = g_eventManager->RegisterEventHandler("OnLoad", OnLoadHandler, nullptr, 0, nullptr, nullptr);
@@ -385,6 +401,13 @@ extern "C" __declspec(dllexport) bool FOSEPlugin_Load(const FOSEInterface* fose)
     // Register handler using alias "OnEquipped" (alias for "OnEquip")
     bool r18 = g_eventManager->RegisterEventHandler("OnEquipped", OnEquipAliasHandler, nullptr, 0, "TestEventPlugin", "OnEquipAliasHandler");
     Log("Phase 1.1 Event Alias test: RegisterEventHandler(OnEquipped)=%d", r18);
+
+    // Phase 3.0 test: Script Calling/Evaluation (interface availability test)
+    Log("Phase 3.0 Script Calling test: ScriptInterface %s", g_scriptInterface ? "available" : "NOT available");
+    if (g_scriptInterface)
+    {
+        Log("Phase 3.0 Script Calling test: Interface is available but CallFunction is RUNTIME-only");
+    }
 
     return true;
 }

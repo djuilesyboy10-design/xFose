@@ -2,17 +2,30 @@
 #include "GameAPI.h"
 #include "GameForms.h"
 #include "GameObjects.h"
+#include "ScriptRunner.h"
 #include "common/IDebugLog.h"
 
-// Stub implementations for FOSEScriptInterface functions
-// These will be fully implemented later
+// Implementations for FOSEScriptInterface functions
 
 bool ScriptInterface_CallFunction(Script* funcScript, TESObjectREFR* callingObj, TESObjectREFR* container,
 	double* result, UInt8 numArgs, ...)
 {
-	_MESSAGE("ScriptInterface_CallFunction called (stub)");
-	if (result) *result = 0;
-	return false;
+	if (!funcScript)
+	{
+		_MESSAGE("ScriptInterface_CallFunction: funcScript is NULL");
+		if (result) *result = 0;
+		return false;
+	}
+
+	// Use UDFCaller to call the user-defined function
+	va_list args;
+	va_start(args, numArgs);
+	
+	bool success = UDFCaller::CallUDF(funcScript, callingObj, container, result, numArgs, args);
+	
+	va_end(args);
+	
+	return success;
 }
 
 UInt32 ScriptInterface_GetFunctionParams(Script* funcScript, UInt8* paramTypesOut)
