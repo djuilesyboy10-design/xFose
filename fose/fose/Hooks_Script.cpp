@@ -185,12 +185,39 @@ static __declspec(naked) void LookupFormByEditorIDHook(void)
 
 UInt32* g_ScriptDataBytes = NULL;
 
+// Captured params from last natural game call to ExecuteLine
+UInt32 g_ExecLine_ECX = 0;
+UInt32 g_ExecLine_Params[9] = {0};
+UInt32 g_ExecLine_CaptureCount = 0;
+
 static __declspec(naked) void ExecuteScriptLineHook(void)
 {
 	__asm {
 		// grab the 4th arg to ScriptRunner::ExecuteLine()
 		mov		eax,	[esp+0x10]
 		mov		g_ScriptDataBytes, eax
+
+		// capture ECX (this) and all 9 stack params
+		mov		g_ExecLine_ECX, ecx
+		mov		eax, [esp+0x04]
+		mov		g_ExecLine_Params, eax
+		mov		eax, [esp+0x08]
+		mov		g_ExecLine_Params+4, eax
+		mov		eax, [esp+0x0C]
+		mov		g_ExecLine_Params+8, eax
+		mov		eax, [esp+0x10]
+		mov		g_ExecLine_Params+12, eax
+		mov		eax, [esp+0x14]
+		mov		g_ExecLine_Params+16, eax
+		mov		eax, [esp+0x18]
+		mov		g_ExecLine_Params+20, eax
+		mov		eax, [esp+0x1C]
+		mov		g_ExecLine_Params+24, eax
+		mov		eax, [esp+0x20]
+		mov		g_ExecLine_Params+28, eax
+		mov		eax, [esp+0x24]
+		mov		g_ExecLine_Params+32, eax
+		inc		g_ExecLine_CaptureCount
 
 		// overwritten code
 		push	ebp

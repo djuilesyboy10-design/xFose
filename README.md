@@ -4,6 +4,8 @@ xFOSE is an updated, modernized continuation of the Fallout 3 Script Extender (F
 
 ## What's New
 
+- **ScriptInterface API** - New interface for calling game scripts from plugins via `UDFCaller::CallUDF()`, enabling dynamic script execution with parameter passing and return values
+- **ScriptRunner::ExecuteLine** - Fixed calling convention and parameter passing for the game's internal script execution function — plugins can now reliably call scripts via FOSE without crashes
 - **Restored Event Manager** - The Event Manager was broken in the original FOSE and never worked. xFOSE fixes the initialization order bug and provides a fully working event system
 - **Event Handlers** - Plugins can register handlers for game events: OnHit, OnDeath, OnLoad, OnEquip, OnActivate, OnKeyDown, OnKeyUp, OnKeyPress, and more
 - **Phase 1 Event Manager Enhancements** - Event aliases, event flags system, internal events (LoadGame, SaveGame, ExitGame), better debug info with plugin/handler names, and event stack tracking

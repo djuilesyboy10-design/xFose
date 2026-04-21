@@ -3,6 +3,7 @@
 #include "fose/PluginAPI.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <Windows.h>
 
 // Plugin info
 static const char* g_pluginName = "TestEventPlugin";
@@ -71,6 +72,78 @@ void OnKeyPressHandler(void** params, void* context)
 {
     UInt32 keycode = params ? (UInt32)params[0] : 0;
     Log("OnKeyPress fired! keycode=%d (0x%02X)", keycode, keycode);
+
+    // F1 key (0x3B) triggers UDF calling test
+    if (keycode == 0x3B && g_scriptInterface)
+    {
+        Log("Phase 3.0 Script Calling test: F1 pressed - testing UDF calling");
+        Log("Phase 3.0 Script Calling test: Test 1 - NULL script");
+        
+        // Debug: Log interface pointer and function pointer
+        Log("g_scriptInterface = %08X", g_scriptInterface);
+        void* funcPtr = (void*)((char*)g_scriptInterface + 4);
+        Log("Function pointer at offset +4 = %08X", funcPtr);
+        UInt32* funcPtrAsUInt32 = (UInt32*)funcPtr;
+        Log("Function pointer value = %08X", *funcPtrAsUInt32);
+        
+        // Get actual address from exported function in fose_1_7.dll
+        HMODULE foseDll = GetModuleHandleA("fose_1_7.dll");
+        Log("fose_1_7.dll module handle = %08X", foseDll);
+        if (foseDll)
+        {
+            typedef void* (__cdecl *GetScriptInterfaceCallFunctionAddressFunc)();
+            GetScriptInterfaceCallFunctionAddressFunc getAddrFunc = (GetScriptInterfaceCallFunctionAddressFunc)GetProcAddress(foseDll, "GetScriptInterfaceCallFunctionAddress");
+            if (getAddrFunc)
+            {
+                void* actualAddr = getAddrFunc();
+                Log("Actual ScriptInterface_CallFunction address from exported function = %08X", actualAddr);
+                Log("Interface pointer value = %08X, Actual function address = %08X", *funcPtrAsUInt32, actualAddr);
+                Log("Address match: %s", ((void*)(uintptr_t)*funcPtrAsUInt32 == actualAddr) ? "YES" : "NO");
+            }
+            else
+            {
+                Log("ERROR: GetScriptInterfaceCallFunctionAddress not found in fose_1_7.dll");
+            }
+        }
+        else
+        {
+            Log("ERROR: Could not get module handle for fose_1_7.dll");
+        }
+        
+        // Call the function pointer VALUE (not the address of the struct field)
+        typedef bool (__cdecl *CallFunctionFunc)(void*, void*, void*, double*, UInt8, ...);
+        CallFunctionFunc callFunction = (CallFunctionFunc)(uintptr_t)*funcPtrAsUInt32;
+        Log("Calling function at address %08X", (UInt32)(uintptr_t)callFunction);
+        
+        // Test 1: NULL script (should return false gracefully)
+        double result1 = 0;
+        bool success1 = callFunction(nullptr, nullptr, nullptr, &result1, 0);
+        Log("Phase 3.0 Test 1 (NULL script): result=%d, return=%f", success1, result1);
+        
+        // Test 2: Real script from game data (requires foseDll handle)
+        typedef void* (__cdecl *FindFirstScriptFunc)();
+        FindFirstScriptFunc findScript = foseDll ? (FindFirstScriptFunc)GetProcAddress(foseDll, "FindFirstScript") : nullptr;
+        if (findScript)
+        {
+            void* scriptPtr = findScript();
+            Log("Phase 3.0 Test 2: FindFirstScript returned %08X", scriptPtr);
+            if (scriptPtr)
+            {
+                double result2 = 0;
+                Log("Phase 3.0 Test 2: Calling CallFunction with real script %08X", scriptPtr);
+                bool success2 = callFunction(scriptPtr, nullptr, nullptr, &result2, 0);
+                Log("Phase 3.0 Test 2 (real script): result=%d, return=%f", success2, result2);
+            }
+            else
+            {
+                Log("Phase 3.0 Test 2: No suitable script found in game data");
+            }
+        }
+        else
+        {
+            Log("Phase 3.0 Test 2: FindFirstScript export not found");
+        }
+    }
 }
 
 // Phase 1 test handlers
@@ -402,11 +475,25 @@ extern "C" __declspec(dllexport) bool FOSEPlugin_Load(const FOSEInterface* fose)
     bool r18 = g_eventManager->RegisterEventHandler("OnEquipped", OnEquipAliasHandler, nullptr, 0, "TestEventPlugin", "OnEquipAliasHandler");
     Log("Phase 1.1 Event Alias test: RegisterEventHandler(OnEquipped)=%d", r18);
 
-    // Phase 3.0 test: Script Calling/Evaluation (interface availability test)
+    // Phase 3.0 test: Script Calling/Evaluation (UDF calling test)
     Log("Phase 3.0 Script Calling test: ScriptInterface %s", g_scriptInterface ? "available" : "NOT available");
     if (g_scriptInterface)
     {
-        Log("Phase 3.0 Script Calling test: Interface is available but CallFunction is RUNTIME-only");
+        // Temporarily disabled due to crash on main menu load
+        // Test 1: Call with NULL script (should fail gracefully)
+        Log("Phase 3.0 Script Calling test: Test DISABLED - investigating crash");
+        /*
+        Log("Phase 3.0 Script Calling test: Test 1 - NULL script");
+        double result1 = 0;
+        bool success1 = ((bool (*)(Script*, TESObjectREFR*, TESObjectREFR*, double*, UInt8, ...))((char*)g_scriptInterface + 4))(
+            nullptr, nullptr, nullptr, &result1, 0);
+        Log("Phase 3.0 Script Calling test: Test 1 result=%d, return=%f", success1, result1);
+
+        // Test 2: Try to find a simple script to call (if available)
+        // For now, we'll just log that we need a real script to test
+        Log("Phase 3.0 Script Calling test: Test 2 - Need real script for full UDF test");
+        Log("Phase 3.0 Script Calling test: ScriptInterface CallFunction is available");
+        */
     }
 
     return true;

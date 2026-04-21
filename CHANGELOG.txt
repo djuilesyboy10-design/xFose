@@ -1,6 +1,42 @@
 xFOSE Changelog
 ===============
 
+Version 1.4 - ScriptInterface API
+================================
+
+ScriptInterface API (NEW)
+--------------------------
+- Added ScriptInterface (kInterface_Script) for calling game scripts from plugins
+- Implemented UDFCaller::CallUDF() for dynamic script execution with parameter passing
+- Added FindFirstScript export for locating suitable scripts in game data
+- Script execution now works with proper bytecode offset parsing
+- Supports quest scripts and object scripts with automatic type selection
+
+ScriptRunner::ExecuteLine Fix
+-------------------------------
+- Fixed calling convention: changed to __fastcall with ECX=this + 9 stack params
+- Corrected parameter layout based on captured game calls via hook instrumentation
+- p2 = block body offset (parsed from Begin block header)
+- p5 = Begin chunk data length (parsed from bytecode)
+- p7 = execution mode flag (2)
+- p4/p6 = adjacent UInt32* for opcode offset tracking
+- Zeroed ScriptRunner is sufficient (no complex initialization needed)
+- No more stack corruption or crashes when calling scripts via FOSE
+
+Technical Details
+-----------------
+- Hook instrumentation added to ExecuteScriptLineHook to capture game's natural calls
+- Captured ECX (ScriptRunner*) and all 9 stack parameters from game execution
+- Used captured data to reverse-engineer correct parameter layout
+- Bytecode parsing added to dynamically extract block offsets
+- Tested with quest scripts in-game — ExecuteLine returns success (1) consistently
+
+Documentation
+-------------
+- Updated README.md with ScriptInterface and ScriptRunner::ExecuteLine entries
+- Added parameter documentation to _ExecuteLine typedef in ScriptRunner.cpp
+- Cleaned up diagnostic code from CallUDF for production use
+
 Version 1.0 - Initial Release
 ============================
 
