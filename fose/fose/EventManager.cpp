@@ -4,6 +4,7 @@
 #include "GameData.h"
 #include "GameObjects.h"
 #include "Hooks_DirectInput8Create.h"
+#include "ScriptRunner.h"
 #include <windows.h>
 #include <stack>
 
@@ -16,6 +17,9 @@ namespace EventManager
 	
 	// Static storage for event handlers
 	static std::unordered_map<std::string, std::list<EventCallback>> s_eventHandlers;
+	
+	// Static storage for script event handlers (separate to avoid ABI changes)
+	static std::unordered_map<std::string, std::list<ScriptEventHandlerInfo>> s_scriptEventHandlers;
 	
 	// Initialization flag
 	static bool s_initialized = false;
@@ -477,6 +481,71 @@ namespace EventManager
 		
 		return false;
 	}
+
+	bool RegisterScriptEventHandler(const char* eventName, Script* script, TESObjectREFR* target, UInt32 priority, const char* handlerName)
+	{
+		if (!s_initialized || !eventName || !script)
+			return false;
+		
+		// Check if event exists
+		auto it = s_eventNameMap.find(eventName);
+		if (it == s_eventNameMap.end())
+			return false;
+		
+		// Create handler
+		ScriptEventHandlerInfo handler(script, target, priority);
+		if (handlerName)
+			handler.m_handlerName = handlerName;
+		
+		// Add to script handler list
+		auto& handlerList = s_scriptEventHandlers[eventName];
+		
+		// Check if handler already exists
+		for (const auto& existing : handlerList)
+		{
+			if (existing == handler)
+				return false;
+		}
+		
+		// Insert in priority order (higher priority first)
+		handlerList.push_back(handler);
+		handlerList.sort([](const ScriptEventHandlerInfo& a, const ScriptEventHandlerInfo& b) {
+			return a.m_priority > b.m_priority;
+		});
+		
+		// Update s_eventsInUse bitmask for ScriptEventList events
+		EventInfo* eventInfo = it->second;
+		if (eventInfo->evID < kEventID_ScriptEventListMAX) {
+			s_eventsInUse |= MaskForEventID(eventInfo->evID);
+			_MESSAGE("RegisterScriptEventHandler: '%s' -> s_eventsInUse = 0x%08X", eventName, s_eventsInUse);
+		}
+		
+		return true;
+	}
+
+	bool RemoveScriptEventHandler(const char* eventName, Script* script, TESObjectREFR* target)
+	{
+		if (!s_initialized || !eventName || !script)
+			return false;
+		
+		// Check if event has script handlers
+		auto handlersIt = s_scriptEventHandlers.find(eventName);
+		if (handlersIt == s_scriptEventHandlers.end())
+			return false;
+		
+		// Find and remove handler
+		auto& handlerList = handlersIt->second;
+		for (auto it = handlerList.begin(); it != handlerList.end(); ++it)
+		{
+			if (it->m_script == script && it->m_target == target)
+			{
+				handlerList.erase(it);
+				return true;
+			}
+		}
+		
+		return false;
+	}
 	
 	void DispatchEvent(const char* eventName, void** params)
 	{
@@ -526,6 +595,39 @@ namespace EventManager
 				// _MESSAGE("DispatchEvent: Calling handler for event '%s'", eventName);
 				
 				handler.nativeHandler.m_func(params, handler.nativeHandler.m_context);
+			}
+		}
+
+		// Dispatch to script handlers
+		auto scriptHandlersIt = s_scriptEventHandlers.find(eventName);
+		if (scriptHandlersIt != s_scriptEventHandlers.end())
+		{
+			auto& scriptHandlerList = scriptHandlersIt->second;
+			for (auto& scriptHandler : scriptHandlerList)
+			{
+				if (!scriptHandler.m_script)
+					continue;
+
+				// Convert event parameters to script arguments
+				// For now, pass all parameters as doubles (script variables)
+				UInt8 numParams = eventInfo->numParams;
+				double result = 0.0;
+
+				// Build va_list of parameters
+				// Note: This is a simplified approach - we'll need to handle different param types properly
+				if (numParams > 0 && params)
+				{
+					// For now, just call with no parameters to test basic functionality
+					// TODO: Convert params to proper script arguments based on param types
+				}
+
+				// Call the script function
+				bool success = UDFCaller::CallUDF(scriptHandler.m_script, scriptHandler.m_target, nullptr, &result, 0);
+				
+				if (!success)
+				{
+					_MESSAGE("DispatchEvent: Failed to call script handler for event '%s'", eventName);
+				}
 			}
 		}
 		

@@ -137,6 +137,31 @@ namespace EventManager
 		operator bool() const { return m_func != nullptr; }
 	};
 
+	// Script event handler information
+	struct ScriptEventHandlerInfo
+	{
+		Script*					m_script;		// Script function to call
+		TESObjectREFR*			m_target;		// Target object for script execution
+		UInt32					m_priority;		// Handler priority (higher = first)
+		std::string				m_handlerName;	// Name of this handler (for debugging)
+		
+		ScriptEventHandlerInfo() : m_script(nullptr), m_target(nullptr), m_priority(0) {}
+		ScriptEventHandlerInfo(Script* script, TESObjectREFR* target = nullptr, UInt32 priority = 0)
+			: m_script(script), m_target(target), m_priority(priority) {}
+		
+		bool operator==(const ScriptEventHandlerInfo& rhs) const
+		{
+			return m_script == rhs.m_script && m_target == rhs.m_target;
+		}
+		
+		bool operator!=(const ScriptEventHandlerInfo& rhs) const
+		{
+			return !(*this == rhs);
+		}
+		
+		operator bool() const { return m_script != nullptr; }
+	};
+
 	// Event filter structure - allows filtering handlers by parameter values
 	struct EventFilter
 	{
@@ -194,6 +219,14 @@ namespace EventManager
 	// Remove a native event handler
 	// Returns true if handler was found and removed
 	bool RemoveEventHandler(const char* eventName, EventHandlerCallback callback, void* context = nullptr);
+
+	// Register a script event handler
+	// Returns true if handler was registered successfully
+	bool RegisterScriptEventHandler(const char* eventName, Script* script, TESObjectREFR* target = nullptr, UInt32 priority = 0, const char* handlerName = nullptr);
+
+	// Remove a script event handler
+	// Returns true if handler was found and removed
+	bool RemoveScriptEventHandler(const char* eventName, Script* script, TESObjectREFR* target = nullptr);
 	
 	// Dispatch an event to all registered handlers
 	void DispatchEvent(const char* eventName, void** params);

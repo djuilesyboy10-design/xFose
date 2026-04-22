@@ -318,11 +318,27 @@ struct FOSEEventManagerInterface
 	// context: the context pointer used during registration
 	// returns: true on success, false on failure
 	bool (* RemoveEventHandler)(const char* eventName, EventHandlerCallback callback, void* context);
-	
+
+	// Register a script event handler
+	// eventName: name of the event to register for (e.g., "OnHit", "OnDeath", "OnLoad")
+	// script: script function to call when the event fires
+	// target: target object for script execution (can be nullptr)
+	// priority: handler priority (higher = called first)
+	// handlerName: optional handler name for debug logging (can be nullptr)
+	// returns: true on success, false on failure
+	bool (* RegisterScriptEventHandler)(const char* eventName, Script* script, TESObjectREFR* target, UInt32 priority, const char* handlerName);
+
+	// Remove a script event handler
+	// eventName: name of the event to unregister from
+	// script: the script to remove
+	// target: the target object used during registration
+	// returns: true on success, false on failure
+	bool (* RemoveScriptEventHandler)(const char* eventName, Script* script, TESObjectREFR* target);
+
 	// Check if a handler is the first/last in the handler list for an event
 	bool (* IsEventHandlerFirst)(const char* eventName, EventHandlerCallback callback, void* context);
 	bool (* IsEventHandlerLast)(const char* eventName, EventHandlerCallback callback, void* context);
-	
+
 	// Get all handlers for an event
 	// Returns count of handlers found
 	UInt32 (* GetEventHandlers)(const char* eventName, void** outHandlers, UInt32 maxHandlers);

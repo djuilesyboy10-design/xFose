@@ -141,6 +141,16 @@ static bool PluginAPI_RemoveEventHandler(const char* eventName, FOSEEventManager
 	return EventManager::RemoveEventHandler(eventName, callback, context);
 }
 
+static bool PluginAPI_RegisterScriptEventHandler(const char* eventName, Script* script, TESObjectREFR* target, UInt32 priority, const char* handlerName)
+{
+	return EventManager::RegisterScriptEventHandler(eventName, script, target, priority, handlerName);
+}
+
+static bool PluginAPI_RemoveScriptEventHandler(const char* eventName, Script* script, TESObjectREFR* target)
+{
+	return EventManager::RemoveScriptEventHandler(eventName, script, target);
+}
+
 static bool PluginAPI_IsEventHandlerFirst(const char* eventName, FOSEEventManagerInterface::EventHandlerCallback callback, void* context)
 {
 	return EventManager::IsEventHandlerFirst(eventName, callback, context);
@@ -161,6 +171,8 @@ static const FOSEEventManagerInterface g_FOSEEventManagerInterface =
 	FOSEEventManagerInterface::kVersion,
 	PluginAPI_RegisterEventHandler,
 	PluginAPI_RemoveEventHandler,
+	PluginAPI_RegisterScriptEventHandler,
+	PluginAPI_RemoveScriptEventHandler,
 	PluginAPI_IsEventHandlerFirst,
 	PluginAPI_IsEventHandlerLast,
 	PluginAPI_GetEventHandlers
