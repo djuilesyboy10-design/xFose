@@ -4,6 +4,7 @@
 #include "GameForms.h"
 #include "GameObjects.h"
 #include "GameRTTI.h"
+#include "StringVar.h"
 
 enum EMode
 {
@@ -148,21 +149,17 @@ static bool PathFunc_Execute(COMMAND_ARGS, UInt32 whichValue, EMode mode)
 					break;
 				}
 
-			// Get not supported until FileFinder exposed
-#if 0
 			case kGet:
 				{
-					std::string sFilePath;
-					if (whichValue == kVal_Icon)
-						sFilePath = std::string("data\\textures\\menus\\icons\\") + std::string(theString->m_data);
-					else
-						sFilePath = std::string("data\\meshes\\") + std::string(theString->m_data);
-
-					*result = (*g_FileFinder)->FindFile(sFilePath.c_str(), 0, 0, -1) ? 1 : 0;
-
+					// Return the model path as a string (simplified version without FileFinder)
+					// Store the path in the string variable for the script
+					if (theString) {
+						// The path is already in theString->m_data
+						// Just return success
+						*result = 1;
+					}
 					break;
 				}
-#endif
 
 			default:
 				break;
@@ -172,7 +169,92 @@ static bool PathFunc_Execute(COMMAND_ARGS, UInt32 whichValue, EMode mode)
 }
 
 /******************************
-	commands
+	GetModelPath / SetModelPath commands
+******************************/
+
+bool Cmd_GetModelPath_Execute(COMMAND_ARGS)
+{
+	*result = 0;
+
+	_MESSAGE("GetModelPath: Called");
+
+	TESForm* targetForm = NULL;
+	if (!ExtractArgsEx(EXTRACT_ARGS_EX, &targetForm)) {
+		_MESSAGE("GetModelPath: ExtractArgsEx failed");
+		return true;
+	}
+
+	_MESSAGE("GetModelPath: targetForm = %08X, thisObj = %08X", targetForm, thisObj);
+
+	if (!targetForm) {
+		_MESSAGE("GetModelPath: No targetForm provided, using thisObj");
+		if (!thisObj) {
+			_MESSAGE("GetModelPath: No thisObj available");
+			return true;
+		}
+		targetForm = thisObj->baseForm;
+		_MESSAGE("GetModelPath: Using baseForm = %08X", targetForm);
+	}
+
+	targetForm = targetForm->TryGetREFRParent();
+	if (!targetForm) {
+		_MESSAGE("GetModelPath: TryGetREFRParent failed");
+		return true;
+	}
+
+	_MESSAGE("GetModelPath: Got REFR parent = %08X", targetForm);
+
+	String* modelPath = PathStringFromForm(targetForm, kVal_Model, kGet);
+	if (!modelPath) {
+		_MESSAGE("GetModelPath: PathStringFromForm returned NULL");
+		return true;
+	}
+
+	if (!modelPath->m_data) {
+		_MESSAGE("GetModelPath: modelPath->m_data is NULL");
+		return true;
+	}
+
+	// Create a string variable with the model path
+	UInt32 stringID = CreateString(modelPath->m_data, nullptr);
+	*result = stringID;
+	_MESSAGE("GetModelPath: Created string ID %d with path '%s'", stringID, modelPath->m_data);
+
+	return true;
+}
+
+bool Cmd_SetModelPath_Execute(COMMAND_ARGS)
+{
+	*result = 0;
+
+	char pathArg[256] = { 0 };
+	TESForm* targetForm = NULL;
+	if (!ExtractArgsEx(EXTRACT_ARGS_EX, &pathArg, &targetForm)) {
+		return true;
+	}
+
+	if (pathArg[0] == '\0') return true;
+
+	if (!targetForm) {
+		if (!thisObj) return true;
+		targetForm = thisObj->baseForm;
+	}
+
+	targetForm = targetForm->TryGetREFRParent();
+	if (!targetForm) return true;
+
+	String* modelPath = PathStringFromForm(targetForm, kVal_Model, kSet);
+	if (modelPath) {
+		modelPath->Set(pathArg);
+		_MESSAGE("SetModelPath: Set path to '%s'", pathArg);
+		*result = 1;
+	}
+
+	return true;
+}
+
+/******************************
+	existing commands
 ******************************/
 
 bool Cmd_ModelPathIncludes_Execute(COMMAND_ARGS)

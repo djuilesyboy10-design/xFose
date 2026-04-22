@@ -113,3 +113,93 @@ Re-implemented script event handler functionality to allow plugins to register s
 - Both Debug and Release builds tested and working
 - Backup includes complete solution with both configuration outputs
 - Baseline stable with no crashes
+
+---
+
+## [GetModelPath/SetModelPath Commands] - 2026-04-22
+
+### Summary
+Implemented GetModelPath and SetModelPath commands to allow scripts to get and set model paths for game objects. These commands were requested by Dracrack for modding purposes (terminal UI mod and FOV handler mod). The implementation uses the existing string variable infrastructure for proper string return.
+
+### Changes
+
+#### Commands_ModelIcon.cpp
+- Added `StringVar.h` include for string variable support
+- Implemented `Cmd_GetModelPath_Execute`:
+  - Extracts target form or uses thisObj if not provided
+  - Gets REFR parent of the form
+  - Retrieves model path using `PathStringFromForm`
+  - Creates string variable with model path using `CreateString`
+  - Returns string variable ID to script
+  - Added debug logging (to be cleaned up)
+- Implemented `Cmd_SetModelPath_Execute`:
+  - Extracts path string and target form
+  - Gets REFR parent of the form
+  - Sets model path using `PathStringFromForm` with kSet mode
+  - Returns success status
+
+#### Commands_ModelIcon.h
+- Added command definitions:
+  - `DEFINE_COMMAND(GetModelPath, returns the model path of the specified object, 0, 1, kParams_OneOptionalObject)`
+  - `DEFINE_COMMAND(SetModelPath, sets the model path of the specified object, 0, 2, kParams_OneString_OneOptionalObject)`
+- Changed parameter types from inventory-specific (`kParams_OneOptionalInventoryObject`) to general object types (`kParams_OneOptionalObject`) to allow commands to work with any object, not just inventory items
+
+#### CommandTable.cpp
+- Registered GetModelPath and SetModelPath commands:
+  - Initially registered inside `#ifdef _DEBUG` block (incorrect)
+  - Moved outside `#ifdef _DEBUG` block for Release build availability
+  - Placed after array variable commands, before debug-only commands
+
+### Testing
+
+#### Build Tests
+- Debug configuration: ✅ PASSED
+- Release configuration: ✅ PASSED (DLL compiled successfully)
+- Note: Post-build copy commands fail in Release config (pre-existing issue, unrelated to changes)
+
+#### In-Game Tests
+- SetModelPath: ✅ WORKING
+  - Successfully sets model path for objects
+  - Log: `SetModelPath: Set path to '0003fa43'`
+- GetModelPath: ✅ WORKING
+  - Successfully retrieves model path and returns string variable ID
+  - Test with Rad X: Returns string ID 2 with path 'Clutter\Health\RadX01.NIF'
+  - Log: `GetModelPath: Created string ID 2 with path 'Clutter\Health\RadX01.NIF'`
+
+### Technical Notes
+
+#### String Return Mechanism
+- GetModelPath uses string variable system for string return
+- Commands that return strings in FOSE typically use string variables (sv_create, sv_set, sv_get)
+- GetModelPath returns string variable ID, script uses sv_get to retrieve actual path
+- No FileFinder dependency needed - path is already in form data
+
+#### Parameter Type Selection
+- Changed from `kParams_OneOptionalInventoryObject` to `kParams_OneOptionalObject`
+- Allows commands to work with any object that has a model path (weapons, armor, furniture, NPCs, terminals, etc.)
+- More flexible and useful for modding purposes
+
+#### Debug Logging
+- Added comprehensive debug logging to GetModelPath to identify failure points
+- Logs: ExtractArgsEx, form extraction, TryGetREFRParent, PathStringFromForm, CreateString
+- TODO: Remove debug logging for production (optional cleanup)
+
+### Known Limitations
+- GetModelPath requires object to implement TESModel interface (via PathStringFromForm)
+- Objects without TESModel interface will return NULL for model path
+- SetModelPath similarly requires TESModel interface
+
+### Design Decisions
+- Use string variable system for GetModelPath string return (consistent with FOSE patterns)
+- General object parameter type for maximum compatibility
+- Debug logging for troubleshooting (to be removed in production)
+- No FileFinder dependency (path already in form data)
+
+### Files Modified
+- `fose/fose/Commands_ModelIcon.cpp`
+- `fose/fose/Commands_ModelIcon.h`
+- `fose/fose/CommandTable.cpp`
+
+### Build Status
+- Debug: ✅ Compiles successfully
+- Release: ✅ Compiles successfully

@@ -1890,6 +1890,9 @@ void CommandTable::Init(void)
 	ADD_CMD(ar_clear);
 	ADD_CMD(ar_is_valid);
 
+	ADD_CMD(GetModelPath);
+	ADD_CMD(SetModelPath);
+
 #ifdef _DEBUG
 //	ADD_CMD(CloneForm);
 	ADD_CMD(ModelPathIncludes);
