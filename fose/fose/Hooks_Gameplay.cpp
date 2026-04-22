@@ -160,9 +160,6 @@ static UInt8* s_equipItemTrampoline = NULL;				// Allocated trampoline memory
 
 static void ActivateHandler()
 {
-	_MESSAGE("Activate Hook Called!");
-	Console_Print("Activate Hook Called!");
-
 	// Dispatch OnActivate event to registered handlers
 	// TODO: Extract activator and target from stack/registers
 	void* params[2] = { nullptr, nullptr };  // activator, target
@@ -171,9 +168,6 @@ static void ActivateHandler()
 
 static void EquipItemHandler()
 {
-	_MESSAGE("EquipItem Hook Called!");
-	Console_Print("EquipItem Hook Called!");
-
 	// Dispatch OnEquip event to registered handlers
 	// TODO: Extract actor and item from stack/registers
 	void* params[2] = { nullptr, nullptr };  // actor, item

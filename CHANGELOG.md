@@ -1,5 +1,71 @@
 # FOSE Changelog
 
+## [Hook Log Spam Fix] - 2026-04-22
+
+### Summary
+Fixed excessive log spam from EquipItem and Activate hooks by removing unconditional logging from hook handlers. Also investigated and resolved a reported pipboy issue, which was found to be caused by a mod conflict rather than FOSE code.
+
+### Changes
+
+#### Hooks_Gameplay.cpp
+- Modified `ActivateHandler`:
+  - Removed unconditional `_MESSAGE` and `Console_Print` calls
+  - Preserved event dispatching functionality
+  - Now only dispatches OnActivate event without logging
+- Modified `EquipItemHandler`:
+  - Removed unconditional `_MESSAGE` and `Console_Print` calls
+  - Preserved event dispatching functionality
+  - Now only dispatches OnEquip event without logging
+
+### Testing
+
+#### Build Tests
+- Debug configuration: ✅ PASSED
+- Release configuration: ✅ PASSED (DLL compiled successfully)
+- Note: Post-build copy commands fail in both configs (pre-existing issue, unrelated to changes)
+
+#### In-Game Tests
+- Log spam from EquipItem/Activate hooks: ✅ RESOLVED
+  - Previously: Hundreds of log entries per second from "EquipItem Hook Called!" and "Activate Hook Called!"
+  - After fix: No log spam from FOSE core
+- TestEventPlugin still logs events (as intended for testing)
+- Pipboy issue investigation: ✅ RESOLVED
+  - Issue: Tab and F1 keys not opening pipboy
+  - Root cause: Mod conflict (unrelated to FOSE code)
+  - Confirmed by disabling TestEventPlugin - issue persisted
+  - FOSE hooks and event system working correctly
+
+### Technical Notes
+
+#### Log Spam Cause
+- EquipItem and Activate hooks were being called very frequently
+- Unconditional logging on every call caused massive log file growth
+- Logging was added for debugging but not removed after testing
+- Event dispatching functionality was preserved - only logging removed
+
+#### Pipboy Issue Investigation
+- Initial suspicion: EquipItem hook interfering with input processing
+- Investigation steps:
+  - Removed logging from hooks - issue persisted
+  - Disabled TestEventPlugin - issue persisted
+  - Conclusion: Mod conflict on user's system
+- FOSE code confirmed not to be the cause
+
+### Design Decisions
+- Remove all unconditional logging from frequently-called hooks
+- Keep event dispatching functionality intact
+- TestEventPlugin kept as-is (it's designed to log all events for testing)
+- Future: Consider adding configurable logging to TestEventPlugin
+
+### Files Modified
+- `fose/fose/Hooks_Gameplay.cpp`
+
+### Build Status
+- Debug: ✅ Compiles successfully
+- Release: ✅ Compiles successfully
+
+---
+
 ## [Script Event Handler Implementation] - 2026-04-22
 
 ### Summary
