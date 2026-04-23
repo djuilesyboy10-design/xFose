@@ -1,5 +1,64 @@
 # FOSE Changelog
 
+## [TestEventPlugin Configurable Logging] - 2026-04-23
+
+### Summary
+Added configurable logging flags to TestEventPlugin to allow selective event logging. This prevents log spam from high-frequency events (OnEquip, OnKeyDown, OnKeyUp, OnKeyPress) while preserving the ability to log other events for testing purposes.
+
+### Changes
+
+#### TestEventPlugin/main.cpp
+- Added configurable logging flags at top of file:
+  - `LOG_ON_HIT`, `LOG_ON_DEATH`, `LOG_ON_LOAD` - enabled by default (1)
+  - `LOG_ON_EQUIP`, `LOG_ON_KEY_DOWN`, `LOG_ON_KEY_UP`, `LOG_ON_KEY_PRESS` - disabled by default (0) due to high frequency
+  - `LOG_ON_LOAD_GAME`, `LOG_ON_SAVE_GAME`, `LOG_ON_EXIT_GAME`, etc. - enabled by default (1)
+- Wrapped all Log() calls in event handlers with `#if FLAG == 1` guards
+- Initial implementation used `#ifdef` which only checks if symbol is defined, not its value - fixed to use `#if == 1` for proper evaluation
+- Applied guards to all event handlers including Phase 2 priority test handlers and Phase 1.1 alias test handlers
+
+### Testing
+
+#### Build Tests
+- Debug configuration: ✅ PASSED
+- Release configuration: ✅ PASSED (DLL compiled successfully)
+
+#### In-Game Tests
+- High-frequency events logging: ✅ DISABLED (as configured)
+  - OnEquip: No log spam
+  - OnKeyDown: No log spam
+  - OnKeyUp: No log spam
+  - OnKeyPress: No log spam
+- Low-frequency events logging: ✅ ENABLED (as configured)
+  - OnDeath: Logs correctly
+  - OnLoad: Logs correctly
+  - OnLoadGame: Logs correctly with Phase 4.0 script handler test
+- Script handler registration: ✅ WORKING
+  - Log: `Phase 4.0 Script Event Handler test: RegisterScriptEventHandler(OnHit)=1`
+
+### Technical Notes
+
+#### Preprocessor Directive Choice
+- Initial implementation used `#ifdef` which only checks if a symbol is defined, not its value
+- This caused flags set to 0 to still be treated as "defined" and include the logging code
+- Fixed by changing to `#if FLAG == 1` to properly evaluate the flag values
+- This allows true on/off control via the #define values
+
+#### Design Decisions
+- High-frequency events disabled by default to prevent log spam
+- Low-frequency events enabled by default for useful debugging
+- Simple #define flags at top of file for easy configuration
+- No external config file needed - compile-time configuration
+- TestEventPlugin remains a valuable debugging tool when configured appropriately
+
+### Files Modified
+- `TestEventPlugin/main.cpp`
+
+### Build Status
+- Debug: ✅ Compiles successfully
+- Release: ✅ Compiles successfully
+
+---
+
 ## [Hook Log Spam Fix] - 2026-04-22
 
 ### Summary

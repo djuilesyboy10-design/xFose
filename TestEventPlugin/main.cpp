@@ -9,6 +9,26 @@
 static const char* g_pluginName = "TestEventPlugin";
 static UInt32 g_pluginVersion = 1;
 
+// ============================================================================
+// CONFIGURABLE LOGGING FLAGS
+// Set to 1 to enable logging, 0 to disable
+// ============================================================================
+
+#define LOG_ON_HIT          1
+#define LOG_ON_DEATH        1
+#define LOG_ON_LOAD         1
+#define LOG_ON_EQUIP        0   // High-frequency event - disabled by default
+#define LOG_ON_KEY_DOWN     0   // High-frequency event - disabled by default
+#define LOG_ON_KEY_UP       0   // High-frequency event - disabled by default
+#define LOG_ON_KEY_PRESS    0   // High-frequency event - disabled by default
+#define LOG_ON_LOAD_GAME    1
+#define LOG_ON_SAVE_GAME    1
+#define LOG_ON_EXIT_GAME    1
+#define LOG_ON_EXIT_TO_MAIN 1
+#define LOG_ON_NEW_GAME     1
+#define LOG_ON_DELETE_GAME  1
+#define LOG_ON_RENAME_GAME  1
+
 // Event Manager interface pointer
 static FOSEEventManagerInterface* g_eventManager = nullptr;
 
@@ -38,45 +58,60 @@ static void Log(const char* fmt, ...)
 // Event handler callbacks
 void OnHitHandler(void** params, void* context)
 {
+#if LOG_ON_HIT == 1
     Log("OnHit fired! source=%08X target=%08X", params ? params[0] : 0, params ? params[1] : 0);
+#endif
 }
 
 void OnDeathHandler(void** params, void* context)
 {
+#if LOG_ON_DEATH == 1
     Log("OnDeath fired! source=%08X target=%08X", params ? params[0] : 0, params ? params[1] : 0);
+#endif
 }
 
 void OnLoadHandler(void** params, void* context)
 {
+#if LOG_ON_LOAD == 1
     Log("OnLoad fired! source=%08X target=%08X", params ? params[0] : 0, params ? params[1] : 0);
+#endif
 }
 
 void OnEquipHandler(void** params, void* context)
 {
+#if LOG_ON_EQUIP == 1
     Log("OnEquip fired! source=%08X target=%08X", params ? params[0] : 0, params ? params[1] : 0);
+#endif
 }
 
 void OnKeyDownHandler(void** params, void* context)
 {
+#if LOG_ON_KEY_DOWN == 1
     UInt32 keycode = params ? (UInt32)params[0] : 0;
     Log("OnKeyDown fired! keycode=%d (0x%02X)", keycode, keycode);
+#endif
 }
 
 void OnKeyUpHandler(void** params, void* context)
 {
+#if LOG_ON_KEY_UP == 1
     UInt32 keycode = params ? (UInt32)params[0] : 0;
     Log("OnKeyUp fired! keycode=%d (0x%02X)", keycode, keycode);
+#endif
 }
 
 void OnKeyPressHandler(void** params, void* context)
 {
+#if LOG_ON_KEY_PRESS == 1
     UInt32 keycode = params ? (UInt32)params[0] : 0;
     Log("OnKeyPress fired! keycode=%d (0x%02X)", keycode, keycode);
+#endif
 }
 
 // Phase 1 test handlers
 void OnLoadGameHandler(void** params, void* context)
 {
+#if LOG_ON_LOAD_GAME == 1
     Log("OnLoadGame fired!");
     
     // Phase 4.0 test: Script Event Handlers (deferred to OnLoadGame when game data is available)
@@ -109,58 +144,79 @@ void OnLoadGameHandler(void** params, void* context)
     {
         Log("Phase 4.0 Script Event Handler test: Could not get fose_1_7.dll handle");
     }
+#endif
 }
 
 void OnSaveGameHandler(void** params, void* context)
 {
+#if LOG_ON_SAVE_GAME == 1
     Log("OnSaveGame fired!");
+#endif
 }
 
 void OnExitGameHandler(void** params, void* context)
 {
+#if LOG_ON_EXIT_GAME == 1
     Log("OnExitGame fired!");
+#endif
 }
 
 void OnExitToMainMenuHandler(void** params, void* context)
 {
+#if LOG_ON_EXIT_TO_MAIN == 1
     Log("OnExitToMainMenu fired!");
+#endif
 }
 
 void OnNewGameHandler(void** params, void* context)
 {
+#if LOG_ON_NEW_GAME == 1
     Log("OnNewGame fired!");
+#endif
 }
 
 void OnDeleteGameHandler(void** params, void* context)
 {
+#if LOG_ON_DELETE_GAME == 1
     Log("OnDeleteGame fired!");
+#endif
 }
 
 void OnRenameGameHandler(void** params, void* context)
 {
+#if LOG_ON_RENAME_GAME == 1
     Log("OnRenameGame fired!");
+#endif
 }
 
 // Phase 2 test handlers
 void OnHitHighPriorityHandler(void** params, void* context)
 {
+#if LOG_ON_HIT == 1
     Log("OnHitHighPriorityHandler fired!");
+#endif
 }
 
 void OnHitLowPriorityHandler(void** params, void* context)
 {
+#if LOG_ON_HIT == 1
     Log("OnHitLowPriorityHandler fired!");
+#endif
 }
 
 // Phase 1.1 test handlers - Event Aliases
 void OnDeathAliasHandler(void** params, void* context)
 {
+#if LOG_ON_DEATH == 1
     Log("OnDeathAliasHandler (using alias OnActorDeath) fired! source=%08X target=%08X", params ? params[0] : 0, params ? params[1] : 0);
+#endif
 }
 
 void OnEquipAliasHandler(void** params, void* context)
 {
+#if LOG_ON_EQUIP == 1
     Log("OnEquipAliasHandler (using alias OnEquipped) fired! source=%08X target=%08X", params ? params[0] : 0, params ? params[1] : 0);
+#endif
 }
 
 extern "C" __declspec(dllexport) bool FOSEPlugin_Query(const FOSEInterface* fose, PluginInfo* info)
