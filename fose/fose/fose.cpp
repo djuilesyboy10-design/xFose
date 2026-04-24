@@ -2,6 +2,7 @@
 #include "CommandTable.h"
 #include "Hooks_DirectInput8Create.h"
 #include "Hooks_Gameplay.h"
+#include "Hooks_Menu.h"
 #include "Hooks_SaveLoad.h"
 #include "Hooks_Script.h"
 #include "Core_Serialization.h"
@@ -81,6 +82,7 @@ void FOSE_Initialize(void)
 
 		Hook_DirectInput8Create_Init();
 		Hook_Gameplay_Init();
+		InitMenuHooks();
 		Hook_SaveLoad_Init();
 		Hook_Script_Init();
 

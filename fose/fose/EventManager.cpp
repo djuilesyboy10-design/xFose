@@ -264,6 +264,7 @@ namespace EventManager
 		RegisterEvent("OnKeyDown", kEventID_OnKeyDown, kEventParams_InputEvent, 1);
 		RegisterEvent("OnKeyUp", kEventID_OnKeyUp, kEventParams_InputEvent, 1);
 		RegisterEvent("OnKeyPress", kEventID_OnKeyPress, kEventParams_InputEvent, 1);
+		RegisterEvent("OnMenuClick", kEventID_OnMenuClick, kEventParams_OnMenuClick, 3);
 		
 		// Internal events (save/load, game state)
 		RegisterEvent("OnLoadGame", kEventID_LoadGame, nullptr, 0);
@@ -275,6 +276,7 @@ namespace EventManager
 		RegisterEvent("OnRenameGame", kEventID_RenameGame, nullptr, 0);
 		RegisterEvent("OnNewGame", kEventID_NewGame, nullptr, 0);
 		RegisterEvent("OnPreLoadGame", kEventID_PreLoadGame, nullptr, 0);
+		RegisterEvent("OnRuntimeScriptError", kEventID_RuntimeScriptError, nullptr, 0);
 		
 	}
 	

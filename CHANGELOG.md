@@ -1,5 +1,72 @@
 # FOSE Changelog
 
+## [RuntimeScriptError Hook with Runtime Address Discovery] - 2026-04-24
+
+### Summary
+Implemented RuntimeScriptError hook for Fallout 3 GOG v1.7.0.3 using a novel runtime address discovery technique. Instead of relying on potentially incorrect hardcoded addresses, we built a memory scanner (ErrorScanner) that finds the actual script error handler function at runtime by analyzing string references and call patterns in the executable.
+
+### Key Innovation: ErrorScanner
+Created a universal memory scanner infrastructure that can discover any function address at runtime:
+
+- **String Xref Scanner**: Finds all `push imm32` instructions referencing known strings in .rdata
+- **CALL Xref Scanner**: Finds all `call rel32` instructions targeting specific addresses
+- **Next-CALL Scanner**: For each string push, finds the next CALL instruction within N bytes
+- **Prologue Dumper**: Reads function entry bytes to determine safe hook points
+
+This technique enables version-agnostic hook discovery - the same code works across GOG, Steam, and Anniversary builds without pre-computed offsets.
+
+### Changes
+
+#### fose/Hooks_SaveLoad.cpp
+- Added ErrorScanner infrastructure (ScanForScriptErrorHandlers function)
+- Discovered real script error function at `0x00519EC0` (GOG v1.7.0.3)
+- Implemented 14-byte SEH prologue trampoline hook at 0x00519EC0
+- Hook captures: return address, script context, format string, and varargs
+- Formats full error message (e.g., `Script command "xyz" not found.`)
+- Dispatches OnRuntimeScriptError event with error details
+
+#### EventManager
+- OnRuntimeScriptError event already registered in previous commits
+- Event fires when any script error occurs (syntax, runtime, missing commands, etc.)
+
+### Technical Details
+
+**Discovered Function Signature:**
+```c
+void ScriptError(void* scriptContext, const char* fmt, ...);
+```
+
+**Prologue Bytes (14-byte MSVC SEH):**
+```
+6A FF 68 8B 69 C3 00 64 A1 00 00 00 00 50
+push -1
+push offset __ehhandler$?...
+mov eax, fs:[0]
+push eax
+```
+
+**Hook Output Example:**
+```
+ScriptError: retAddr=0051D050 ctx=001AD910 msg: Script command "somefakecommand" not found.
+```
+
+### Testing
+- Hook installation: ✅ SUCCESS (no crash)
+- Error capture: ✅ WORKING
+  - Console errors trigger hook
+  - Full formatted message captured
+  - Event dispatch confirmed
+
+### Implications
+This scanner technique can now be applied to:
+- Find QQQ (exit game) hook address
+- Discover v1.7.0.4 Steam addresses without a tester
+- Locate tile click dispatchers for universal menu hooking
+- Find ScriptEventList vtables for missing events (OnGrab, OnOpen, etc.)
+- Auto-generate addresses for Anniversary Patcher builds
+
+---
+
 ## [Save/Load/Delete/Rename Hooks - FO3 v1.7.0.3] - 2026-04-24
 
 ### Summary

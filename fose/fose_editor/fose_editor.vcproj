@@ -95,8 +95,6 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Installing DLL..."
-				CommandLine="copy &quot;$(TargetPath)&quot; &quot;$(FalloutPath)\$(TargetFileName)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -176,8 +174,6 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Installing DLL..."
-				CommandLine="copy &quot;$(TargetPath)&quot; &quot;$(FalloutPath)\$(TargetFileName)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -256,8 +252,6 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Installing DLL..."
-				CommandLine="copy &quot;$(TargetPath)&quot; &quot;$(FalloutPath)\$(TargetFileName)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -336,8 +330,6 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Installing DLL..."
-				CommandLine="copy &quot;$(TargetPath)&quot; &quot;$(FalloutPath)\$(TargetFileName)&quot;"
 			/>
 		</Configuration>
 	</Configurations>
@@ -364,7 +356,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\fose\EventManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\EventManager.h"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\EventParams.h"
+				>
+			</File>
+			<File
 				RelativePath="..\fose\ParamInfos.h"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\UIInterface.cpp"
 				>
 			</File>
 			<File
@@ -401,6 +409,70 @@
 			</File>
 			<File
 				RelativePath="..\fose\PluginManager.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="commands"
+			>
+			<File
+				RelativePath="..\fose\Commands_ActorState.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\Commands_Array.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\Commands_Console.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\Commands_Faction.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\Commands_Game.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\Commands_Input.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\Commands_Inventory.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\Commands_List.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\Commands_Math.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\Commands_MiscRef.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\Commands_ModelIcon.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\Commands_Quest.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\Commands_Script.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\Commands_String.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\fose\Commands_UI.cpp"
 				>
 			</File>
 		</Filter>

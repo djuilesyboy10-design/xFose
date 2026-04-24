@@ -28,6 +28,7 @@ static UInt32 g_pluginVersion = 1;
 #define LOG_ON_NEW_GAME     1
 #define LOG_ON_DELETE_GAME  1
 #define LOG_ON_RENAME_GAME  1
+#define LOG_ON_MENU_CLICK   1
 
 // Event Manager interface pointer
 static FOSEEventManagerInterface* g_eventManager = nullptr;
@@ -186,6 +187,17 @@ void OnRenameGameHandler(void** params, void* context)
 {
 #if LOG_ON_RENAME_GAME == 1
     Log("OnRenameGame fired!");
+#endif
+}
+
+void OnMenuClickHandler(void** params, void* context)
+{
+#if LOG_ON_MENU_CLICK == 1
+    UInt32 actionID = params ? (UInt32)params[0] : 0;
+    UInt32 menuType = params ? (UInt32)params[1] : 0;
+    const char* tileName = params && params[2] ? (const char*)params[2] : "";
+    Log("OnMenuClick fired! actionID=%d (0x%02X) menuType=0x%03X tile='%s'",
+        actionID, actionID, menuType, tileName);
 #endif
 }
 
@@ -458,6 +470,8 @@ extern "C" __declspec(dllexport) bool FOSEPlugin_Load(const FOSEInterface* fose)
     bool r12 = g_eventManager->RegisterEventHandler("OnNewGame", OnNewGameHandler, nullptr, 0, "TestEventPlugin", "OnNewGameHandler");
     bool r13 = g_eventManager->RegisterEventHandler("OnDeleteGame", OnDeleteGameHandler, nullptr, 0, "TestEventPlugin", "OnDeleteGameHandler");
     bool r14 = g_eventManager->RegisterEventHandler("OnRenameGame", OnRenameGameHandler, nullptr, 0, "TestEventPlugin", "OnRenameGameHandler");
+    bool rMenu = g_eventManager->RegisterEventHandler("OnMenuClick", OnMenuClickHandler, nullptr, 0, "TestEventPlugin", "OnMenuClickHandler");
+    Log("OnMenuClick handler registered: %d", rMenu);
 
     Log("RegisterEventHandler results: OnHit=%d OnDeath=%d OnLoad=%d OnEquip=%d OnKeyDown=%d OnKeyUp=%d OnKeyPress=%d", r1, r2, r3, r4, r5, r6, r7);
     Log("Phase 1 event handlers: OnLoadGame=%d OnSaveGame=%d OnExitGame=%d OnExitToMainMenu=%d OnNewGame=%d OnDeleteGame=%d OnRenameGame=%d", r8, r9, r10, r11, r12, r13, r14);

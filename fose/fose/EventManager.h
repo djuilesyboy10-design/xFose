@@ -77,6 +77,7 @@ namespace EventManager
 		kEventID_OnKeyDown = kEventID_GameEventMAX,
 		kEventID_OnKeyUp,
 		kEventID_OnKeyPress,
+		kEventID_OnMenuClick,
 		
 		kEventID_InputEventMAX,
 		
@@ -90,6 +91,7 @@ namespace EventManager
 		kEventID_RenameGame,
 		kEventID_NewGame,
 		kEventID_PreLoadGame,
+		kEventID_RuntimeScriptError,
 		
 		// User-defined events
 		kEventID_UserDefined,

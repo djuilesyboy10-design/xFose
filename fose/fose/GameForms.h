@@ -16,6 +16,9 @@
 	static const UInt32 _TESValueForm_SetValue = 0x0045BE20;
 #elif FALLOUT_VERSION == FALLOUT_VERSION_1_7ng
 	static const UInt32 _TESValueForm_SetValue = 0x0045BEB0;
+#elif defined(EDITOR)
+	// Editor doesn't use this function, define dummy value
+	static const UInt32 _TESValueForm_SetValue = 0;
 #else
 #error unsupported fallout version
 #endif

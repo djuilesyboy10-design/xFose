@@ -86,4 +86,10 @@ namespace EventManager
 	{
 		kParamType_Int,
 	};
+
+	// OnMenuClick: (actionID, menuType, tileName)
+	static ParamType kEventParams_OnMenuClick[3] =
+	{
+		kParamType_Int, kParamType_Int, kParamType_String
+	};
 }
