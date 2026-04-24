@@ -29,6 +29,27 @@ static UInt32 g_pluginVersion = 1;
 #define LOG_ON_DELETE_GAME  1
 #define LOG_ON_RENAME_GAME  1
 #define LOG_ON_MENU_CLICK   1
+#define LOG_ON_QQQ          1
+#define LOG_ON_RUNTIME_SCRIPT_ERROR 1
+// ScriptEventList events - test dispatch
+#define LOG_ON_GRAB         1
+#define LOG_ON_OPEN         1
+#define LOG_ON_CLOSE        1
+#define LOG_ON_FIRE         1
+#define LOG_ON_TRIGGER      1
+#define LOG_ON_RESET        1
+#define LOG_ON_ACTIVATE     1
+#define LOG_ON_ADD          0   // High-frequency, disabled by default
+#define LOG_ON_DROP         1
+#define LOG_ON_UNEQUIP      1
+#define LOG_ON_MURDER       1
+#define LOG_ON_START_COMBAT 1
+#define LOG_ON_COMBAT_END   1
+#define LOG_ON_PACKAGE_START 0 // High-frequency, disabled
+#define LOG_ON_PACKAGE_DONE  0 // High-frequency, disabled
+#define LOG_ON_HIT_WITH     0  // High-frequency, disabled
+#define LOG_ON_SELL         1
+#define LOG_ON_MAGIC_HIT    1
 
 // Event Manager interface pointer
 static FOSEEventManagerInterface* g_eventManager = nullptr;
@@ -200,6 +221,47 @@ void OnMenuClickHandler(void** params, void* context)
         actionID, actionID, menuType, tileName);
 #endif
 }
+
+// New internal event handlers
+void OnQQQHandler(void** params, void* context)
+{
+#if LOG_ON_QQQ == 1
+    Log("OnQQQ fired! (console 'qqq' exit command)");
+#endif
+}
+
+void OnRuntimeScriptErrorHandler(void** params, void* context)
+{
+#if LOG_ON_RUNTIME_SCRIPT_ERROR == 1
+    Log("OnRuntimeScriptError fired!");
+#endif
+}
+
+// ScriptEventList event handlers - generic 2-param (source, target) signature
+#define MAKE_EVT_HANDLER(name, flag) \
+    void name##Handler(void** params, void* context) { \
+        if (flag) Log(#name " fired! source=%08X target=%08X", \
+            params ? params[0] : 0, params ? params[1] : 0); \
+    }
+
+MAKE_EVT_HANDLER(OnGrab, LOG_ON_GRAB)
+MAKE_EVT_HANDLER(OnOpen, LOG_ON_OPEN)
+MAKE_EVT_HANDLER(OnClose, LOG_ON_CLOSE)
+MAKE_EVT_HANDLER(OnFire, LOG_ON_FIRE)
+MAKE_EVT_HANDLER(OnTrigger, LOG_ON_TRIGGER)
+MAKE_EVT_HANDLER(OnReset, LOG_ON_RESET)
+MAKE_EVT_HANDLER(OnActivate, LOG_ON_ACTIVATE)
+MAKE_EVT_HANDLER(OnAdd, LOG_ON_ADD)
+MAKE_EVT_HANDLER(OnDrop, LOG_ON_DROP)
+MAKE_EVT_HANDLER(OnUnequip, LOG_ON_UNEQUIP)
+MAKE_EVT_HANDLER(OnMurder, LOG_ON_MURDER)
+MAKE_EVT_HANDLER(OnStartCombat, LOG_ON_START_COMBAT)
+MAKE_EVT_HANDLER(OnCombatEnd, LOG_ON_COMBAT_END)
+MAKE_EVT_HANDLER(OnPackageStart, LOG_ON_PACKAGE_START)
+MAKE_EVT_HANDLER(OnPackageDone, LOG_ON_PACKAGE_DONE)
+MAKE_EVT_HANDLER(OnHitWith, LOG_ON_HIT_WITH)
+MAKE_EVT_HANDLER(OnSell, LOG_ON_SELL)
+MAKE_EVT_HANDLER(OnMagicEffectHit, LOG_ON_MAGIC_HIT)
 
 // Phase 2 test handlers
 void OnHitHighPriorityHandler(void** params, void* context)
@@ -503,6 +565,34 @@ extern "C" __declspec(dllexport) bool FOSEPlugin_Load(const FOSEInterface* fose)
     // Register handler using alias "OnEquipped" (alias for "OnEquip")
     bool r18 = g_eventManager->RegisterEventHandler("OnEquipped", OnEquipAliasHandler, nullptr, 0, "TestEventPlugin", "OnEquipAliasHandler");
     Log("Phase 1.1 Event Alias test: RegisterEventHandler(OnEquipped)=%d", r18);
+
+    // Register new internal event handlers
+    g_eventManager->RegisterEventHandler("OnQQQ", OnQQQHandler, nullptr, 0, "TestEventPlugin", "OnQQQHandler");
+    g_eventManager->RegisterEventHandler("OnRuntimeScriptError", OnRuntimeScriptErrorHandler, nullptr, 0, "TestEventPlugin", "OnRuntimeScriptErrorHandler");
+
+    // Register ScriptEventList event handlers (dispatched via MarkEvent hook)
+    #define REG_EVT(name) g_eventManager->RegisterEventHandler(#name, name##Handler, nullptr, 0, "TestEventPlugin", #name "Handler")
+    REG_EVT(OnGrab);
+    REG_EVT(OnOpen);
+    REG_EVT(OnClose);
+    REG_EVT(OnFire);
+    REG_EVT(OnTrigger);
+    REG_EVT(OnReset);
+    REG_EVT(OnActivate);
+    REG_EVT(OnAdd);
+    REG_EVT(OnDrop);
+    REG_EVT(OnUnequip);
+    REG_EVT(OnMurder);
+    REG_EVT(OnStartCombat);
+    REG_EVT(OnCombatEnd);
+    REG_EVT(OnPackageStart);
+    REG_EVT(OnPackageDone);
+    REG_EVT(OnHitWith);
+    REG_EVT(OnSell);
+    REG_EVT(OnMagicEffectHit);
+    #undef REG_EVT
+
+    Log("All ScriptEventList event handlers registered");
 
     return true;
 }

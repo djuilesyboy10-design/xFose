@@ -162,11 +162,11 @@ static const UInt32 kEquipItemHookAddr = 0x0053CF40;	// EquipItem function entry
 static const UInt32 kEquipItemPrologueEnd = 0x0053CF4E;	// After 14-byte prologue (6A FF 68 2872C300 64:A1 00000000)
 static UInt8* s_equipItemTrampoline = NULL;				// Allocated trampoline memory
 
-static void ActivateHandler()
+static void __cdecl ActivateHandler(void* target, void* activator)
 {
 	// Dispatch OnActivate event to registered handlers
-	// TODO: Extract activator and target from stack/registers
-	void* params[2] = { nullptr, nullptr };  // activator, target
+	// Captured from naked hook: ecx was target, [esp+4] was activator
+	void* params[2] = { activator, target };  // source=activator, target=activated
 	EventManager::DispatchEvent("OnActivate", params);
 }
 
@@ -181,16 +181,29 @@ static void EquipItemHandler()
 static __declspec(naked) void ActivateHook(void)
 {
 	__asm {
-		// Save all registers
+		// Capture args BEFORE pushad corrupts esp-relative offsets
+		// At hook entry: ecx = target (this), [esp+4] = activator (first stack arg)
+		// Stash them in eax/edx before pushad so we can use them after
+		push	ecx					// save target on stack for later push
+		push	dword ptr [esp + 8]	// save activator (was [esp+4] before push ecx)
+
+		// Save all other registers
 		pushad
 		pushfd
 
-		// Call our handler
+		// Call cdecl handler: ActivateHandler(target, activator)
+		// Stack layout now: [esp] flags, [esp+4..35] pushad, [esp+36]=activator, [esp+40]=target
+		push	dword ptr [esp + 36]	// push activator (2nd arg)
+		push	dword ptr [esp + 44]	// push target (1st arg) - offset shifted by 4 from prev push
 		call	ActivateHandler
+		add		esp, 8					// cdecl caller cleanup
 
 		// Restore registers
 		popfd
 		popad
+
+		// Clean up the 2 values we stashed before pushad
+		add		esp, 8
 
 		// Jump to trampoline to execute original prologue
 		jmp		s_activateTrampoline
