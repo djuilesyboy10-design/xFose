@@ -87,6 +87,16 @@ static const char* SaveGameMessage = "---Finished saving game: %s";
 	static const UInt32 kNewGamePatchAddr =		0x00680E17;		// overwrite nullsub(void) call
 	static const UInt32 kDeleteGamePatchAddr =	0x006D4BFC;		// DeleteFile() call	
 	static const UInt32 kRenameGamePatchAddr =	0x006DEF91;		// call to rename()
+#elif FALLOUT_VERSION == FALLOUT_VERSION_1_7_0_3
+	static const UInt32 kLoadGamePatchAddr =	0x006D103A;	// TODO: verify
+	static const UInt32 kLoadGameRetnAddr =		0x006D103F;	// TODO: verify
+
+	static const UInt32 kSaveGamePatchAddr =	0x006CEB73;		// push SaveGameMessage
+	static const UInt32 kSaveGameRetnAddr =		0x006CEB78;
+
+	static const UInt32 kNewGamePatchAddr =		0x006C71D0;		// NewGame function
+	static const UInt32 kDeleteGamePatchAddr =	0x007D4C30;		// DeleteGame function
+	static const UInt32 kRenameGamePatchAddr =	0x007D4C80;		// RenameGame function
 #else
 #error unsupported fallout version
 #endif
@@ -183,13 +193,9 @@ static void RenameGameHook(const char * oldPath, const char * newPath)
 void Hook_SaveLoad_Init(void)
 {
 	WriteRelJump(kLoadGamePatchAddr, (UInt32)&LoadGameHook);
-
-#if _DEBUG		// this stuff waits for v0002
 	WriteRelJump(kSaveGamePatchAddr, (UInt32)&SaveGameHook);
 	WriteRelCall(kNewGamePatchAddr, (UInt32)&NewGameHook);
 	WriteRelCall(kDeleteGamePatchAddr, (UInt32)&DeleteGameHook);
 	SafeWrite8(kDeleteGamePatchAddr + 5, 0x90);		// nop out leftover byte from original instruction
 	WriteRelCall(kRenameGamePatchAddr, (UInt32)&RenameGameHook);
-#endif
-
 }

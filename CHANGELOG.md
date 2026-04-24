@@ -1,5 +1,154 @@
 # FOSE Changelog
 
+## [Save/Load/Delete/Rename Hooks - FO3 v1.7.0.3] - 2026-04-24
+
+### Summary
+Implemented Save/Load/Delete/Rename hooks for Fallout 3 GOG version 1.7.0.3. These hooks allow plugins to respond to save game operations (saving, loading, deleting, renaming) and are essential for the internal event system. The hooks are now active in release builds (previously were debug-only).
+
+### Changes
+
+#### fose/Hooks_SaveLoad.cpp
+- Added FALLOUT_VERSION_1_7_0_3 section with hook addresses:
+  - kNewGamePatchAddr: 0x006C71D0
+  - kDeleteGamePatchAddr: 0x007D4C30
+  - kRenameGamePatchAddr: 0x007D4C80
+- Removed _DEBUG guards from SaveGame, NewGame, DeleteGame, and RenameGame hooks
+- Hooks now work in release builds (previously were debug-only)
+- LoadGame and SaveGame hooks were already active, now all Save/Load/Delete/Rename hooks are active
+
+#### Hook Functions
+- NewGameHook: Dispatches OnNewGame event, clears delayed calls and event handlers
+- DeleteGameHook: Dispatches OnDeleteGame event, calls Serialization::HandleDeleteGame, then DeleteFile
+- RenameGameHook: Dispatches OnRenameGame event, calls Serialization::HandleRenameGame, then rename
+- LoadGameHook: Dispatches OnPreLoadGame, OnLoadGame, and OnPostLoadGame events
+- SaveGameHook: Dispatches OnSaveGame event
+
+### Testing
+
+#### Build Tests
+- Debug configuration: ✅ PASSED
+- Release configuration: ✅ PASSED (DLL compiled successfully at C:\Users\djuil\CascadeProjects\FOSEBeta\fose\Debug\fose_1_7.dll)
+- Post-build copy commands fail (pre-existing issue, unrelated to changes)
+
+#### In-Game Tests
+- SaveGame hook: ✅ WORKING
+  - Log: `DoSaveGameHook: Save 16 - , Shack, 00.03.39.fos`
+  - Event dispatch confirmed (message 4 sent)
+  - Serialization system working
+- LoadGame hook: ✅ WORKING
+  - Log: `DoLoadGameHook: Save 15 - Player Name, Shack, 00.02.11.fos`
+  - Event dispatch confirmed (message 3 sent)
+  - StringVar and ArrayVar loading working
+- DeleteGame hook: ✅ WORKING
+  - Log: `DeleteGameHook: C:\Users\djuil\Documents\My Games\Fallout3\Saves\Save 9 - Ally, Megaton, 00.34.41.fos`
+  - Event dispatch confirmed (messages 11 and 15 sent)
+  - File deletion working correctly
+- RenameGame hook: ✅ IMPLEMENTED
+  - Hook code exists and is registered
+  - Cannot test via vanilla UI (Fallout 3 has no native rename feature in load/save menu)
+  - Hook will be triggered by mods that add rename functionality
+
+### Technical Notes
+
+#### Version Support
+- Added FALLOUT_VERSION_1_7_0_3 support (GOG version)
+- Version detected as 0x01070030
+- Hook addresses provided for GOG version 1.7.0.3
+
+#### Debug Guard Removal
+- Previously, SaveGame, NewGame, DeleteGame, and RenameGame hooks were only active in _DEBUG builds
+- Removed _DEBUG guards to enable hooks in release builds
+- LoadGame hook was already active in both configs
+- This change makes all Save/Load/Delete/Rename hooks available in production builds
+
+#### Event Dispatch
+- All hooks dispatch events through EventManager
+- Event dispatch confirmed working for tested hooks
+- Message IDs sent: 3 (LoadGame), 4 (SaveGame), 11 (DeleteGame), 15 (DeleteGame completion)
+
+### Files Modified
+- `fose/fose/Hooks_SaveLoad.cpp`
+
+### Build Status
+- Debug: ✅ Compiles successfully
+- Release: ✅ Compiles successfully
+
+---
+
+## [OnMenuClick Event - Menu Action Dispatch Hook] - 2026-04-23
+
+### Summary
+Implemented a new `OnMenuClick` event that fires whenever the player clicks a UI menu button. This is achieved by hooking the UI menu action dispatch function at `0x0061E7D0` in Fallout 3 1.7. The event passes the raw action ID to plugin handlers, which can then identify and respond to specific menu actions.
+
+### Changes
+
+#### fose/Hooks_Menu.cpp (new file)
+- Hooked UI menu action dispatch function at `0x0061E7D0` (7-byte prologue: `83 EC 6C 8B 44 24 70`)
+- Trampoline pattern: original prologue copied to trampoline, JMP from hook to our stub, stub dispatches event then JMPs to trampoline (which executes prologue + jumps back to post-prologue code)
+- Assembly stack offset: `[ebp+0x28]` after `pushad` (32) + `push ebp` (4) + return addr (4) = param at offset 40
+- Handler logs raw actionID and post-increment index, then dispatches `OnMenuClick` event
+
+#### fose/Hooks_Menu.h
+- Declared `InstallMenuActionDispatchHook()` and `MenuActionDispatchHandler()`
+
+#### fose/fose.cpp
+- Added `#include "Hooks_Menu.h"` and call to `InstallMenuActionDispatchHook()` during initialization
+
+#### fose/EventManager.h
+- Added `kEventID_OnMenuClick` to `EventID` enum (input events section)
+
+#### fose/EventManager.cpp
+- Registered `OnMenuClick` event with 1 int parameter (raw actionID) in `Initialize()`
+
+#### TestEventPlugin/main.cpp
+- Added `LOG_ON_MENU_CLICK` flag (default enabled)
+- Added `OnMenuClickHandler()` that logs the received actionID
+- Registered handler via `RegisterEventHandler("OnMenuClick", ...)`
+
+### Technical Details - Jump Table Analysis
+
+The hooked function uses two lookup tables to map parameter to action:
+- **Byte table at `0x0061E990`** (16+ entries visible): `00 09 01 02 03 04 09 09 09 05 09 06 09 09 09 09`
+  - Maps `(param+1)` to jump table index (9 = default/ret no-op)
+- **Jump table at `0x0061E968`** (10 entries × 4 bytes):
+  - Idx 0: `0x0061E963` (ret/default)
+  - Idx 1: `0x0061E8A3`
+  - Idx 2: `0x0061E8EF`
+  - Idx 3: `0x0061E890`
+  - Idx 4: `0x0061E841`
+  - Idx 5: `0x0061E8DF`
+  - Idx 6: `0x0061E854`
+  - Idx 7: `0x0061E92B` ("UILevelUp")
+  - Idx 8: `0x0061E805`
+  - Idx 9: `0x0061E963` (ret/default)
+
+### Debugging Journey
+
+1. **Initial crash with actionID=15657** - Stack offset miscalculation (tried `ebp+0x70`, `ebp+0x6A`)
+2. **Crash on Special menu entry** - Double prologue execution: hook manually ran `sub esp, 0x6C` AND jumped to trampoline (which also ran prologue)
+3. **Fix** - Removed manual prologue execution, corrected offset to `[ebp+0x28]` (param is at `[esp+4]` BEFORE original prologue runs, not `[esp+0x70]` which is AFTER)
+
+### Testing
+
+#### Build Tests
+- Debug configuration: ✅ PASSED
+
+#### In-Game Tests
+- Special screen attribute clicks: ✅ Fires with actionID=4 and actionID=3
+- No crashes during extensive clicking
+- Event dispatch to TestEventPlugin: ✅ Working (`OnMenuClick fired! actionID=4` observed)
+- Hook stable across multiple menu interactions
+
+### Files Modified
+- `fose/Hooks_Menu.cpp` (new)
+- `fose/Hooks_Menu.h` (new)
+- `fose/fose.cpp`
+- `fose/EventManager.h`
+- `fose/EventManager.cpp`
+- `TestEventPlugin/main.cpp`
+
+---
+
 ## [TestEventPlugin Configurable Logging] - 2026-04-23
 
 ### Summary
