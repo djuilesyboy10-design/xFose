@@ -277,6 +277,7 @@ namespace EventManager
 		RegisterEvent("OnNewGame", kEventID_NewGame, nullptr, 0);
 		RegisterEvent("OnPreLoadGame", kEventID_PreLoadGame, nullptr, 0);
 		RegisterEvent("OnRuntimeScriptError", kEventID_RuntimeScriptError, nullptr, 0);
+		RegisterEvent("OnQQQ", kEventID_QQQ, nullptr, 0);
 		
 	}
 	

@@ -92,6 +92,7 @@ namespace EventManager
 		kEventID_NewGame,
 		kEventID_PreLoadGame,
 		kEventID_RuntimeScriptError,
+		kEventID_QQQ,
 		
 		// User-defined events
 		kEventID_UserDefined,

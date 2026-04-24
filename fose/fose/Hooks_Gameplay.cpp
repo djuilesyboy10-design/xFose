@@ -76,7 +76,11 @@ void __stdcall SendQuitGameMessage(QuitGameMessage msg)
 		EventManager::DispatchEventByID(EventManager::kEventID_ExitToMainMenu, nullptr);
 	}
 	else if (msg == kQuit_QQQ)
+	{
 		msgToSend = FOSEMessagingInterface::kMessage_ExitGame_Console;
+		// Dispatch OnQQQ event (console-triggered exit via 'qqq' command)
+		EventManager::DispatchEventByID(EventManager::kEventID_QQQ, nullptr);
+	}
 	else
 	{
 		// Dispatch OnExitGame event for kQuit_ToWindows
