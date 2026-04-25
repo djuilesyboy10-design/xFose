@@ -1,5 +1,79 @@
 # FOSE Changelog
 
+## [Edition-Ready Foundation - AOB Signatures and Version Detection] - 2026-04-25
+
+### Summary
+Implemented foundation for edition-ready FOSE that will support all Fallout 3 versions (GOG, Steam, old, new, Anniversary) with a single DLL build. Created AOB signature database for dynamic hook address discovery and implemented runtime version detection framework. System remains stable with all existing functionality working correctly.
+
+### Changes
+
+#### fose/fose/SignatureDatabase.h (NEW FILE)
+- Created signature database with AOB patterns for all hook targets
+- Defined HookSignature struct with pattern, length, expected address, description
+- Added signatures for MarkEvent, MarkEvent2, MarkEvent3, OnDrop, OnHit, MultiEvent, Activate, EquipItem
+- Created VersionAddressTable with addresses for known Fallout 3 versions (1.0.15, 1.1.35, 1.4.6, 1.4.6b, 1.5.22, 1.6, 1.7, 1.7ng)
+- Foundation for dynamic address selection based on detected version
+
+#### fose/fose/Scanner.cpp
+- Added FindSignature() function for AOB pattern scanning in .text section
+- Added FindHookAddresses() function to find all hook addresses dynamically
+- Added DetectFalloutVersion() function for runtime version detection
+  - Simplified implementation returns compile-time FALLOUT_VERSION for testing
+  - Full runtime detection requires version.lib linking (deferred)
+  - Logs detected version for verification
+- Integrated signature scanning infrastructure for edition-ready support
+
+#### fose/fose/Scanner.h
+- Added function declarations for signature scanning:
+  - FindSignature() - scan for single AOB pattern
+  - FindHookAddresses() - find all hook addresses
+  - DetectFalloutVersion() - detect Fallout 3 version at runtime
+
+#### fose/fose/Hooks_Gameplay.cpp
+- Integrated version detection into Hook_Gameplay_Init() as read-only test
+- Added call to Scanner::DetectFalloutVersion() to log detected version
+- No functional changes to hook addresses yet (read-only integration)
+- Verified system stability with version detection framework in place
+
+### Testing
+
+#### Build Tests
+- Debug configuration: ✅ PASSED
+- Release configuration: ✅ PASSED
+
+#### In-Game Tests
+- **Version Detection:** ✅ Working correctly
+  - Logs: "VersionDetector: Using compile-time FALLOUT_VERSION = 01070030"
+  - Logs: "Hook_Gameplay_Init: Runtime version detection returned 01070030"
+- **Game Load:** ✅ No crashes on new game or save load
+- **Event Firing:** ✅ All ScriptEventList events firing correctly
+- **System Stability:** ✅ All existing functionality unchanged
+- **Hook Installation:** ✅ All hooks installing correctly with current addresses
+
+### Technical Details
+
+**AOB Signatures:**
+- MarkEvent: 57 8B 79 08 32 C0 (6 bytes)
+- MarkEvent2: 8B 41 08 85 C0 (5 bytes)
+- MarkEvent3: 53 56 8B 74 24 10 (6 bytes)
+- OnDrop: 56 8B 74 24 08 85 F6 (6 bytes)
+- OnHit: 8B 44 24 04 53 33 DB (6 bytes)
+- MultiEvent: 83 EC 08 (5 bytes)
+- Activate: 81 EC 14 01 00 00 (6 bytes)
+- EquipItem: 6A FF 68 28 72 C3 00 (7 bytes)
+
+**Version Detection Strategy:**
+- Current: Simplified implementation returns compile-time FALLOUT_VERSION
+- Future: Full runtime detection using executable version info (requires version.lib)
+- Fallback: Signature scanning for unknown versions
+- Address tables for known versions as fast path
+
+**Next Steps:**
+- Refactor Hook_Gameplay_Init to use dynamic addresses from version table
+- Test dynamic hook installation
+- Implement full runtime version detection with version.lib linking
+- Test with different Fallout 3 versions (GOG, Steam, Anniversary)
+
 ## [Crash Fixes and Event System Stabilization] - 2026-04-25
 
 ### Summary
