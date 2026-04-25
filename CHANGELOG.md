@@ -32,10 +32,11 @@ Implemented runtime version detection using executable file size, enabling true 
 - **Runtime Version Detection:** ✅ Working correctly
   - Test 1: "VersionDetector: Executable size = 14686 KB"
   - Test 1: "VersionDetector: Detected version 1.7 based on file size 14686 KB"
-  - Test 2 (backup executable): "VersionDetector: Executable size = 14691 KB"
-  - Test 2 (backup executable): "VersionDetector: Detected version 1.7 based on file size 14691 KB"
+  - Test 2 (vanilla ESP backup): "VersionDetector: Executable size = 14691 KB"
+  - Test 2 (vanilla ESP backup): "VersionDetector: Detected version 1.7 based on file size 14691 KB"
   - Logs: "Hook_Gameplay_Init: Runtime version detection returned 01070030"
   - **Robustness:** Detection handles minor file size variations (14686 vs 14691 KB) correctly
+  - **Cross-variant compatibility:** Both Anniversary Edition (patched) and Vanilla ESP working correctly
 - **Dynamic Hook Loading:** ✅ Working correctly
   - All hooks using version table addresses based on detected version
 - **Game Load:** ✅ No crashes on new game or save load
@@ -58,9 +59,11 @@ Implemented runtime version detection using executable file size, enabling true 
 - Fallback mechanism for unknown executables
 
 **Current Calibration:**
-- GOG Fallout 3 1.7 (original): 14686 KB (tested and confirmed)
-- GOG Fallout 3 1.7 (backup): 14691 KB (tested and confirmed)
+- GOG Fallout 3 1.7 Anniversary Edition (patched): 14686 KB (tested and confirmed)
+- GOG Fallout 3 1.7 Vanilla ESP (backup): 14691 KB (tested and confirmed)
 - Detection robust to minor file size variations (5 KB difference)
+- Both executables correctly detected as version 1.7
+- All dynamic hooks working correctly across both executables
 - Other versions: Placeholder ranges (need testing with actual executables)
 
 **Next Steps:**
