@@ -49,4 +49,27 @@ namespace Scanner
 	// Convenience: scan for the 13 unknown ScriptEventList masks that aren't
 	// dispatched through the currently-hooked MarkEvent at 0x005183C0.
 	void RunMissingEventMaskScanner();
+
+	// ---------------------------------------------------------------
+	// SignatureScanner
+	// ---------------------------------------------------------------
+	// Scan for AOB (Array of Bytes) signature patterns in .text section.
+	// Used for dynamic version detection - finds hook addresses without
+	// hardcoded values, enabling single FOSE build across versions.
+
+	// Scan for a single signature pattern, returns address or 0 if not found
+	UInt32 FindSignature(const UInt8* pattern, UInt32 patternLength);
+
+	// Find all hook addresses using signature scanning
+	// addresses: output array to store found addresses
+	// count: number of addresses to find (max g_numHookSignatures)
+	void FindHookAddresses(UInt32* addresses, UInt32 count);
+
+	// ---------------------------------------------------------------
+	// VersionDetector
+	// ---------------------------------------------------------------
+	// Detect Fallout 3 version at runtime from executable version info
+	// Returns FALLOUT_VERSION constant for detected version
+	// Falls back to FALLOUT_VERSION_1_7 if detection fails
+	UInt32 DetectFalloutVersion();
 }

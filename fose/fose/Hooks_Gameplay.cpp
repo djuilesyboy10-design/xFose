@@ -400,6 +400,10 @@ static __declspec(naked) void MainMenuFromIngameMenuHook(void)
 
 void Hook_Gameplay_Init()
 {
+	// Test runtime version detection (read-only, no functional changes yet)
+	UInt32 detectedVersion = Scanner::DetectFalloutVersion();
+	_MESSAGE("Hook_Gameplay_Init: Runtime version detection returned %08X", detectedVersion);
+
 	// Install EventManager hooks
 	EventManager::InstallGameHooks();
 

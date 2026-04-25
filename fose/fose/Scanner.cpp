@@ -1,4 +1,5 @@
 #include "Scanner.h"
+#include "SignatureDatabase.h"
 #include <windows.h>
 #include <cstring>
 #include <map>
@@ -137,6 +138,85 @@ namespace Scanner
 		}
 
 		_MESSAGE("MaskScanner: scan complete");
+	}
+
+	// Scan for AOB signature pattern in .text section
+	UInt32 FindSignature(const UInt8* pattern, UInt32 patternLength)
+	{
+		SectionInfo text, rdata;
+		if (!GetSections(text, rdata)) return 0;
+
+		_MESSAGE("SignatureScanner: scanning for pattern (length=%u)", patternLength);
+
+		for (UInt8* p = text.base; p + patternLength < text.base + text.size; p++)
+		{
+			bool match = true;
+			for (UInt32 i = 0; i < patternLength; i++)
+			{
+				// Support wildcard bytes (0xCC for now)
+				if (pattern[i] != 0xCC && pattern[i] != p[i])
+				{
+					match = false;
+					break;
+				}
+			}
+			if (match)
+			{
+				_MESSAGE("SignatureScanner: found pattern at %08X", (UInt32)p);
+				return (UInt32)p;
+			}
+		}
+
+		_MESSAGE("SignatureScanner: pattern not found");
+		return 0;
+	}
+
+	// Find all hook addresses using signature scanning
+	void FindHookAddresses(UInt32* addresses, UInt32 count)
+	{
+		SectionInfo text, rdata;
+		if (!GetSections(text, rdata)) return;
+
+		_MESSAGE("SignatureScanner: finding %u hook addresses via AOB scanning", count);
+
+		for (UInt32 i = 0; i < g_numHookSignatures && i < count; i++)
+		{
+			const HookSignature& sig = g_hookSignatures[i];
+			UInt32 foundAddr = FindSignature(sig.pattern, sig.patternLength);
+
+			if (foundAddr)
+			{
+				addresses[i] = foundAddr;
+				_MESSAGE("SignatureScanner: %s found at %08X (expected %08X)",
+					sig.name, foundAddr, sig.expectedAddr);
+
+				// Verify address is close to expected (within 1MB range for version differences)
+				UInt32 diff = (foundAddr > sig.expectedAddr) ?
+					(foundAddr - sig.expectedAddr) : (sig.expectedAddr - foundAddr);
+				if (diff > 0x100000)  // 1MB
+				{
+					_MESSAGE("SignatureScanner: WARNING - address %08X differs significantly from expected %08X",
+						foundAddr, sig.expectedAddr);
+				}
+			}
+			else
+			{
+				addresses[i] = 0;
+				_MESSAGE("SignatureScanner: %s NOT FOUND - will use fallback address table",
+					sig.name);
+			}
+		}
+	}
+
+	// Detect Fallout 3 version at runtime from executable
+	// Simplified version that returns compile-time FALLOUT_VERSION for now
+	// TODO: Implement full runtime detection using executable hash or version info
+	UInt32 DetectFalloutVersion()
+	{
+		// For now, return the compile-time FALLOUT_VERSION
+		// This allows testing the integration without linker issues
+		_MESSAGE("VersionDetector: Using compile-time FALLOUT_VERSION = %08X", FALLOUT_VERSION);
+		return FALLOUT_VERSION;
 	}
 
 	// Events NOT seen by the existing MarkEvent hook at 0x005183C0.
