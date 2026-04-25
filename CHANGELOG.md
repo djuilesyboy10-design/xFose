@@ -30,9 +30,12 @@ Implemented runtime version detection using executable file size, enabling true 
 
 #### In-Game Tests
 - **Runtime Version Detection:** ✅ Working correctly
-  - Logs: "VersionDetector: Executable size = 14686 KB"
-  - Logs: "VersionDetector: Detected version 1.7 based on file size 14686 KB"
+  - Test 1: "VersionDetector: Executable size = 14686 KB"
+  - Test 1: "VersionDetector: Detected version 1.7 based on file size 14686 KB"
+  - Test 2 (backup executable): "VersionDetector: Executable size = 14691 KB"
+  - Test 2 (backup executable): "VersionDetector: Detected version 1.7 based on file size 14691 KB"
   - Logs: "Hook_Gameplay_Init: Runtime version detection returned 01070030"
+  - **Robustness:** Detection handles minor file size variations (14686 vs 14691 KB) correctly
 - **Dynamic Hook Loading:** ✅ Working correctly
   - All hooks using version table addresses based on detected version
 - **Game Load:** ✅ No crashes on new game or save load
@@ -55,7 +58,9 @@ Implemented runtime version detection using executable file size, enabling true 
 - Fallback mechanism for unknown executables
 
 **Current Calibration:**
-- GOG Fallout 3 1.7: 14686 KB (tested and confirmed)
+- GOG Fallout 3 1.7 (original): 14686 KB (tested and confirmed)
+- GOG Fallout 3 1.7 (backup): 14691 KB (tested and confirmed)
+- Detection robust to minor file size variations (5 KB difference)
 - Other versions: Placeholder ranges (need testing with actual executables)
 
 **Next Steps:**
