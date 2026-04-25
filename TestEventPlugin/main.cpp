@@ -16,7 +16,7 @@ static UInt32 g_pluginVersion = 1;
 
 #define LOG_ON_HIT          1
 #define LOG_ON_DEATH        1
-#define LOG_ON_LOAD         1
+#define LOG_ON_LOAD         0   // High-frequency, disabled - spams log with every object load
 #define LOG_ON_EQUIP        0   // High-frequency event - disabled by default
 #define LOG_ON_KEY_DOWN     0   // High-frequency event - disabled by default
 #define LOG_ON_KEY_UP       0   // High-frequency event - disabled by default
@@ -36,7 +36,7 @@ static UInt32 g_pluginVersion = 1;
 #define LOG_ON_OPEN         1
 #define LOG_ON_CLOSE        1
 #define LOG_ON_FIRE         1
-#define LOG_ON_TRIGGER      1
+#define LOG_ON_TRIGGER      0   // High-frequency, disabled - triggers constantly in trigger zones
 #define LOG_ON_RESET        1
 #define LOG_ON_ACTIVATE     1
 #define LOG_ON_ADD          0   // High-frequency, disabled by default
