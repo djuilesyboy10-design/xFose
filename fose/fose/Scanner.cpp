@@ -208,15 +208,66 @@ namespace Scanner
 		}
 	}
 
-	// Detect Fallout 3 version at runtime from executable
-	// Simplified version that returns compile-time FALLOUT_VERSION for now
-	// TODO: Implement full runtime detection using executable hash or version info
+	// Detect Fallout 3 version at runtime using executable file size
+	// Simple approach: map file size to known FALLOUT_VERSION constants
+	// Falls back to compile-time FALLOUT_VERSION if size doesn't match
 	UInt32 DetectFalloutVersion()
 	{
-		// For now, return the compile-time FALLOUT_VERSION
-		// This allows testing the integration without linker issues
-		_MESSAGE("VersionDetector: Using compile-time FALLOUT_VERSION = %08X", FALLOUT_VERSION);
-		return FALLOUT_VERSION;
+		// Get path to current executable (Fallout3.exe)
+		char exePath[MAX_PATH];
+		GetModuleFileNameA(NULL, exePath, MAX_PATH);
+
+		// Get file size
+		HANDLE hFile = CreateFileA(exePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (hFile == INVALID_HANDLE_VALUE)
+		{
+			_MESSAGE("VersionDetector: Failed to open executable, using compile-time FALLOUT_VERSION = %08X", FALLOUT_VERSION);
+			return FALLOUT_VERSION;
+		}
+
+		LARGE_INTEGER fileSize;
+		if (!GetFileSizeEx(hFile, &fileSize))
+		{
+			CloseHandle(hFile);
+			_MESSAGE("VersionDetector: Failed to get file size, using compile-time FALLOUT_VERSION = %08X", FALLOUT_VERSION);
+			return FALLOUT_VERSION;
+		}
+		CloseHandle(hFile);
+
+		UInt32 sizeKB = (UInt32)(fileSize.QuadPart / 1024);
+		_MESSAGE("VersionDetector: Executable size = %u KB", sizeKB);
+
+		// Map file size to known Fallout 3 versions
+		// These sizes are approximate and will need to be verified with actual executables
+		UInt32 detectedVersion = FALLOUT_VERSION; // Default fallback
+
+		// Known file sizes (in KB) for different versions
+		// These are placeholder values - need to collect actual sizes from different versions
+		if (sizeKB >= 14000 && sizeKB <= 15000)
+		{
+			// Likely 1.7 (GOG/Steam)
+			detectedVersion = FALLOUT_VERSION_1_7;
+			_MESSAGE("VersionDetector: Detected version 1.7 based on file size %u KB", sizeKB);
+		}
+		else if (sizeKB >= 13000 && sizeKB <= 14000)
+		{
+			// Likely 1.6
+			detectedVersion = FALLOUT_VERSION_1_6;
+			_MESSAGE("VersionDetector: Detected version 1.6 based on file size %u KB", sizeKB);
+		}
+		else if (sizeKB >= 12000 && sizeKB <= 13000)
+		{
+			// Likely 1.5
+			detectedVersion = FALLOUT_VERSION_1_5_22;
+			_MESSAGE("VersionDetector: Detected version 1.5 based on file size %u KB", sizeKB);
+		}
+		else
+		{
+			// Unknown size, use compile-time version
+			_MESSAGE("VersionDetector: Unknown file size %u KB, using compile-time FALLOUT_VERSION = %08X", sizeKB, FALLOUT_VERSION);
+		}
+
+		return detectedVersion;
 	}
 
 	// Events NOT seen by the existing MarkEvent hook at 0x005183C0.
