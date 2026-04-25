@@ -1,5 +1,57 @@
 # FOSE Changelog
 
+## [Edition-Ready Foundation - Dynamic Hook Installation] - 2026-04-25
+
+### Summary
+Completed dynamic hook address loading for all version table hooks. Replaced hardcoded hook addresses with runtime address lookups from version tables, with hardcoded fallbacks for unknown versions. All hooks (MarkEvent, MarkEvent2, Activate, EquipItem) now use dynamic addresses while maintaining system stability.
+
+### Changes
+
+#### fose/fose/Hooks_Gameplay.cpp
+- Changed kMarkEventHookAddr, kMarkEvent2HookAddr, kActivateHookAddr, kEquipItemHookAddr from const to non-const for runtime modification
+- Added dynamic address loading for MarkEvent and MarkEvent2 from version table
+- Added dynamic address loading for Activate and EquipItem from version table
+- Calculates prologue end addresses dynamically based on hook address + prologue size
+- Kept hardcoded addresses as fallback defaults for unknown versions
+- All four hooks now use runtime address selection based on detected Fallout 3 version
+
+### Testing
+
+#### Build Tests
+- Debug configuration: ✅ PASSED
+- Release configuration: ✅ PASSED
+
+#### In-Game Tests
+- **Dynamic Address Loading:** ✅ Working correctly
+  - Logs: "MarkEvent2 dynamic address set to 00518430"
+  - Logs: "MarkEvent dynamic address set to 005183C0"
+  - Logs: "Activate dynamic address set to 004EE000"
+  - Logs: "EquipItem dynamic address set to 0053CF40"
+- **Game Load:** ✅ No crashes on new game or save load
+- **Event Firing:** ✅ All ScriptEventList events firing correctly
+- **System Stability:** ✅ All existing functionality unchanged
+- **Hook Installation:** ✅ All hooks installing correctly with dynamic addresses
+
+### Technical Details
+
+**Dynamic Hook Installation Strategy:**
+- Version detection returns FALLOUT_VERSION constant (currently compile-time)
+- GetVersionAddresses() retrieves hook addresses from version table for detected version
+- Hook addresses are loaded at runtime before hook installation
+- Fallback to hardcoded addresses if version not in table
+- Prologue end addresses calculated dynamically (address + prologue size)
+
+**Hook Prologue Sizes:**
+- MarkEvent: 6 bytes
+- MarkEvent2: 5 bytes
+- Activate: 6 bytes
+- EquipItem: 14 bytes
+
+**Next Steps:**
+- Test with different Fallout 3 versions (GOG, Steam, Anniversary)
+- Implement full runtime version detection with version.lib linking
+- Add signature scanning fallback for unknown versions
+
 ## [Edition-Ready Foundation - AOB Signatures and Version Detection] - 2026-04-25
 
 ### Summary
