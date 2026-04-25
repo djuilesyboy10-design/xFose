@@ -132,4 +132,19 @@ static const VersionAddressTable g_versionTables[] = {
 
 static const UInt32 g_numVersionTables = sizeof(g_versionTables) / sizeof(VersionAddressTable);
 
+// Get hook addresses from version table based on detected version
+// Returns true if version found in table, false otherwise
+inline bool GetVersionAddresses(UInt32 detectedVersion, VersionAddressTable& outTable)
+{
+	for (UInt32 i = 0; i < g_numVersionTables; i++)
+	{
+		if (g_versionTables[i].version == detectedVersion)
+		{
+			outTable = g_versionTables[i];
+			return true;
+		}
+	}
+	return false;
+}
+
 #endif

@@ -8,6 +8,7 @@
 #include "PluginManager.h"
 #include "EventManager.h"
 #include "Scanner.h"
+#include "SignatureDatabase.h"
 
 void ToggleUIMessages(bool bEnable)
 {
@@ -121,8 +122,9 @@ static __declspec(naked) void ExitGameViaQQQHook(void)
 // MarkEvent hook - intercepts ScriptEventList::MarkEvent to dispatch events
 // Function at 0x005183C0 is thiscall: ecx = ScriptEventList*, args = (TESForm* target, UInt32 eventMask)
 // Prologue: 57 8B7908 32C0 (push edi / mov edi,[ecx+8] / xor al,al) = 6 bytes
-static const UInt32 kMarkEventHookAddr = 0x005183C0;
-static const UInt32 kMarkEventPrologueEnd = 0x005183C6;  // first instruction after overwritten bytes
+// Dynamic: Address loaded from version table at runtime, with hardcoded fallback
+static UInt32 kMarkEventHookAddr = 0x005183C0;  // Fallback default
+static UInt32 kMarkEventPrologueEnd = 0x005183C6;  // Fallback default (will be recalculated)
 static UInt8* s_markEventTrampoline = NULL;
 
 // We need to reference s_eventsInUse from EventManager for the fast-path check
@@ -158,8 +160,9 @@ static __declspec(naked) void MarkEventHook(void)
 // Handles: OnSell, OnStartCombat, OnOpen, OnClose, OnGrab (and likely more).
 // Thiscall: ecx = ScriptEventList*, eventMask at [ecx+8].
 // Prologue: 8B 41 08 85 C0 = 5 bytes (mov eax,[ecx+8]; test eax,eax).
-static const UInt32 kMarkEvent2HookAddr = 0x00518430;
-static const UInt32 kMarkEvent2PrologueEnd = 0x00518435;
+// Dynamic: Address loaded from version table at runtime
+static UInt32 kMarkEvent2HookAddr = 0x00518430;  // Fallback default
+static UInt32 kMarkEvent2PrologueEnd = 0x00518435;  // Fallback default
 static UInt8* s_markEvent2Trampoline = NULL;
 
 static __declspec(naked) void MarkEvent2Hook(void)
@@ -403,6 +406,30 @@ void Hook_Gameplay_Init()
 	// Test runtime version detection (read-only, no functional changes yet)
 	UInt32 detectedVersion = Scanner::DetectFalloutVersion();
 	_MESSAGE("Hook_Gameplay_Init: Runtime version detection returned %08X", detectedVersion);
+
+	// Try to get dynamic addresses from version table
+	VersionAddressTable versionTable;
+	bool useDynamicAddresses = GetVersionAddresses(detectedVersion, versionTable);
+	if (useDynamicAddresses)
+	{
+		_MESSAGE("Hook_Gameplay_Init: Using dynamic addresses for version %s", versionTable.versionName);
+		_MESSAGE("Hook_Gameplay_Init: MarkEvent=%08X, MarkEvent2=%08X, Activate=%08X, EquipItem=%08X",
+			versionTable.markEventAddr, versionTable.markEvent2Addr, versionTable.activateAddr, versionTable.equipItemAddr);
+
+		// Replace hardcoded addresses with dynamic addresses (one at a time for testing)
+		kMarkEvent2HookAddr = versionTable.markEvent2Addr;
+		kMarkEvent2PrologueEnd = kMarkEvent2HookAddr + 5;  // Prologue is 5 bytes
+		_MESSAGE("Hook_Gameplay_Init: MarkEvent2 dynamic address set to %08X", kMarkEvent2HookAddr);
+
+		// Add MarkEvent dynamic address loading
+		kMarkEventHookAddr = versionTable.markEventAddr;
+		kMarkEventPrologueEnd = kMarkEventHookAddr + 6;  // Prologue is 6 bytes
+		_MESSAGE("Hook_Gameplay_Init: MarkEvent dynamic address set to %08X", kMarkEventHookAddr);
+	}
+	else
+	{
+		_MESSAGE("Hook_Gameplay_Init: Version not in table, using fallback addresses");
+	}
 
 	// Install EventManager hooks
 	EventManager::InstallGameHooks();
