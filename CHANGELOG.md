@@ -17,7 +17,9 @@ Implemented runtime version detection using executable file size, enabling true 
 - Added detailed logging for version detection debugging
 
 #### File Size Ranges (calibrated)
-- 14000-15000 KB: Version 1.7 (GOG/Steam)
+- 14000-16500 KB: Version 1.7 (GOG/Steam)
+  - Expanded from 14000-15000 KB to accommodate Steam account protection wrapping
+  - Steam executables can be up to 16500 KB due to account protection
 - 13000-14000 KB: Version 1.6
 - 12000-13000 KB: Version 1.5
 - Unknown sizes: Fallback to compile-time FALLOUT_VERSION
@@ -37,6 +39,11 @@ Implemented runtime version detection using executable file size, enabling true 
   - Logs: "Hook_Gameplay_Init: Runtime version detection returned 01070030"
   - **Robustness:** Detection handles minor file size variations (14686 vs 14691 KB) correctly
   - **Cross-variant compatibility:** Both Anniversary Edition (patched) and Vanilla ESP working correctly
+- **Steam Executable Support:** ✅ Added
+  - Expanded file size range from 14000-15000 KB to 14000-16500 KB
+  - Accommodates Steam account protection wrapping (executables up to 16500 KB)
+  - Tested with both GOG executables (14686 KB and 14691 KB)
+  - Both Anniversary edition and vanilla ESP working correctly with expanded range
 - **Dynamic Hook Loading:** ✅ Working correctly
   - All hooks using version table addresses based on detected version
 - **Game Load:** ✅ No crashes on new game or save load
