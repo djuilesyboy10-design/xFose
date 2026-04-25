@@ -243,9 +243,10 @@ namespace Scanner
 
 		// Known file sizes (in KB) for different versions
 		// These are placeholder values - need to collect actual sizes from different versions
-		if (sizeKB >= 14000 && sizeKB <= 15000)
+		if (sizeKB >= 14000 && sizeKB <= 16500)
 		{
 			// Likely 1.7 (GOG/Steam)
+			// Steam executables can be up to 16500 KB due to account protection wrapping
 			detectedVersion = FALLOUT_VERSION_1_7;
 			_MESSAGE("VersionDetector: Detected version 1.7 based on file size %u KB", sizeKB);
 		}
