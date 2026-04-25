@@ -313,12 +313,13 @@ skipEvent:
 	}
 }
 
-static const UInt32 kActivateHookAddr = 0x004EE000;	// Activate function entry (CRC 0x6E3D50D1)
-static const UInt32 kActivatePrologueEnd = 0x004EE006;	// After 6-byte prologue (sub esp,114 = 81 EC 14 01 00 00)
+// Dynamic: Address loaded from version table at runtime, with hardcoded fallback
+static UInt32 kActivateHookAddr = 0x004EE000;	// Activate function entry (CRC 0x6E3D50D1) - Fallback default
+static UInt32 kActivatePrologueEnd = 0x004EE006;	// After 6-byte prologue (sub esp,114 = 81 EC 14 01 00 00) - Fallback default
 static UInt8* s_activateTrampoline = NULL;				// Allocated trampoline memory
 
-static const UInt32 kEquipItemHookAddr = 0x0053CF40;	// EquipItem function entry (CRC 0x6E3D50D1)
-static const UInt32 kEquipItemPrologueEnd = 0x0053CF4E;	// After 14-byte prologue (6A FF 68 2872C300 64:A1 00000000)
+static UInt32 kEquipItemHookAddr = 0x0053CF40;	// EquipItem function entry (CRC 0x6E3D50D1) - Fallback default
+static UInt32 kEquipItemPrologueEnd = 0x0053CF4E;	// After 14-byte prologue (6A FF 68 2872C300 64:A1 00000000) - Fallback default (will be recalculated)
 static UInt8* s_equipItemTrampoline = NULL;				// Allocated trampoline memory
 
 static void __cdecl ActivateHandler(void* target, void* activator)
@@ -425,6 +426,16 @@ void Hook_Gameplay_Init()
 		kMarkEventHookAddr = versionTable.markEventAddr;
 		kMarkEventPrologueEnd = kMarkEventHookAddr + 6;  // Prologue is 6 bytes
 		_MESSAGE("Hook_Gameplay_Init: MarkEvent dynamic address set to %08X", kMarkEventHookAddr);
+
+		// Add Activate dynamic address loading
+		kActivateHookAddr = versionTable.activateAddr;
+		kActivatePrologueEnd = kActivateHookAddr + 6;  // Prologue is 6 bytes
+		_MESSAGE("Hook_Gameplay_Init: Activate dynamic address set to %08X", kActivateHookAddr);
+
+		// Add EquipItem dynamic address loading
+		kEquipItemHookAddr = versionTable.equipItemAddr;
+		kEquipItemPrologueEnd = kEquipItemHookAddr + 14;  // Prologue is 14 bytes
+		_MESSAGE("Hook_Gameplay_Init: EquipItem dynamic address set to %08X", kEquipItemHookAddr);
 	}
 	else
 	{
